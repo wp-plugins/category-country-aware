@@ -8,7 +8,7 @@ Stable tag: 0.6.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Category Country Aware widget and Geolocation
+Make your posts and sidebar category and/or visitor location relevant
 
 == Description ==
 
