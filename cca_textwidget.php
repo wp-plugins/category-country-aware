@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Category Country Aware Widget + GeoIP
+Plugin Name: Category Country Aware Wordpress
 Plugin URI: http://means.us.com
 Description: Display different widget content depending on category and visitor location (country)
 Author: Andrew Wrigley
