@@ -70,8 +70,9 @@ class CCAXSettingsPage {
       <h2>Site-wide CCA settings</h2>  
 		  <?php $active_tab = ( isset( $_GET[ 'tab' ]) && ctype_alpha($_GET[ 'tab' ]) ) ? $_GET[ 'tab' ] : 'general'; ?>  
       <h2 class="nav-tab-wrapper">  
-				<a href="?page=<?php echo CCA_X_SETTINGS_SLUG;?>&tab=general" class="nav-tab <?php echo $active_tab == 'general' ? 'nav-tab-active' : ''; ?>">General</a>
-				<a href="?page=<?php echo CCA_X_SETTINGS_SLUG;?>&tab=postwids&subtab=Top" class="nav-tab <?php echo $active_tab == 'postwids' ? 'nav-tab-active' : ''; ?>">Ads within Posts widget</a>
+				<a href="?page=<?php echo CCA_X_SETTINGS_SLUG;?>&tab=general" class="nav-tab <?php echo $active_tab == 'general' ? 'nav-tab-active' : ''; ?>"><?php _e('General'); ?></a>
+				<a href="?page=<?php echo CCA_X_SETTINGS_SLUG;?>&tab=postwids&subtab=Top" class="nav-tab <?php echo $active_tab == 'postwids' ? 'nav-tab-active' : ''; ?>"><?php _e('Ads within Posts widget'); ?></a>
+				<a href="?page=<?php echo CCA_X_SETTINGS_SLUG;?>&tab=country" class="nav-tab <?php echo $active_tab == 'country' ? 'nav-tab-active' : ''; ?>"><?php _e('Countries'); ?></a>
 				<!-- // action hook using array of action_type=>tab label -->
 				<?php do_action('ccax_add_tabs', $active_tab);?>
       </h2>  
@@ -91,6 +92,17 @@ class CCAXSettingsPage {
 				else: echo '<div class="cca-hidden">';submit_button();echo '</div>';
 				endif;
        break;
+
+
+
+      case 'country':
+			  $this->render_country_panel();
+				submit_button('Activate/de-activate these settings');
+			 break;
+
+
+
+
       default:
 			  if( has_action('ccax_render_' . $active_tab)) :
 				  do_action('ccax_render_' . $active_tab, $this->ccax_options);
@@ -157,6 +169,37 @@ public function render_general_panel() { ?>
 	</div><hr /><?php
 
 }  // END function render_general_panel
+
+
+
+public function render_country_panel() { ?>
+		<h3>Automatically update Maxmind GeoLocation IP database</h3>
+		<p><input id="ccax_update_maxmind" name="ccax_options[update_maxmind]" type="checkbox" <?php checked(!empty($this->ccax_options['update_maxmind']));?>/>
+      <label for="ccax_use_shortlist"><?php _e('Update data files now, and add to WP scheduler for auto update every 3 weeks');?></label></p>
+<?php 
+
+      if (!empty($this->ccax_options['update_maxmind']) && ! wp_next_scheduled( CCA_X_MAX_CRON ) ): 
+			  cca_update_maxmind();
+			  wp_schedule_event( time()+864000, 'cca_3weekly', CCA_X_MAX_CRON );
+  	  endif;
+
+
+			echo __("Last successful updates: ") . '<span class="cca-brown">'; 
+			$ccax_maxmind_status = get_option( 'ccax_maxmind_status' );
+			if(!empty($ccax_maxmind_status['ipv4_up_date'])) :
+			  echo date('j M Y Hi e', $ccax_maxmind_status['ipv4_up_date']) . __(" (IPv4 data) ") . ' &nbsp; ';
+			endif;			
+			if(!empty($ccax_maxmind_status['ipv6_up_date'])) :
+			  echo date('j M Y Hi e', $ccax_maxmind_status['ipv6_up_date']) . __(" (IPv6 data)");
+			endif;	
+			echo '</span>';
+			if(!empty($ccax_maxmind_status['last_max_update_status'])) :
+			  echo __('<br /><br />Result of last update:<br /><span class="cca-brown">') . $ccax_maxmind_status['last_max_update_status'] . '</span>';
+			endif;
+			
+			do_action('ccax_render_country',$this->ccax_options);
+}
+
 
 // Render Post Widgets Settings Panel
   public function render_postwids_panel() {
@@ -327,6 +370,9 @@ public function render_general_panel() { ?>
 			case 'general':
 			  $this->sanitize_general($input);
 			 break;
+      case 'country':
+        $this->sanitize_country($input);
+       break;
       default:
 			  if( has_filter('ccax_sanitize_' . $input['action']) ) :
 					$this->ccax_options = apply_filters('ccax_sanitize_' . $input['action'], $this->ccax_options, $input);
@@ -366,6 +412,24 @@ public function render_general_panel() { ?>
 
 	  $this->ccax_options = apply_filters('ccax_sanitize_general',$this->ccax_options, $input);
   }
+
+
+  function sanitize_country($input) {
+    if ( empty($input['update_maxmind']) ):
+      $this->ccax_options['update_maxmind'] = FALSE;
+     	wp_clear_scheduled_hook( CCA_X_MAX_CRON);
+    else:
+     	$this->ccax_options['update_maxmind'] = TRUE;
+      if ( ! wp_next_scheduled( CCA_X_MAX_CRON ) ): 
+			  cca_update_maxmind();
+			  wp_schedule_event( time()+864000, 'cca_3weekly', CCA_X_MAX_CRON );    
+  	  endif;
+    endif;
+  
+  	$this->ccax_options = apply_filters('ccax_sanitize_county',$this->ccax_options, $input);
+  }
+
+
 
   function sanitize_widget($input) {
   	$widtype = $input['sub_action'];

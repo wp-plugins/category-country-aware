@@ -75,6 +75,8 @@ Use **shortcodes** in a "Visiting Chicago" post, to:
 
 * saves valuable sidebar space by enabling same widget to display either RSS or Text/HTML/Script content
 
+* automatic update of IP Range to Country Maxmind GeoLite data 
+
 * extensions (developers see below) providing additional functionality (see plugin documentation) 
 
 &nbsp;
@@ -91,7 +93,7 @@ This product includes GeoLite data created by MaxMind, available from http://www
 If you use Cloudflare and have "switched on" their GeoLocation option ( see [Cloudflare's instructions](https://support.cloudflare.com/hc/en-us/articles/200168236-What-does-CloudFlare-IP-Geolocation-do- ) )
 then it will be used to identify visitor country.  If not, then the Maxmind GeoLite Legacy Country Database, included with this plugin, will be used.
 
-Note: not tested on IPv6 (my servers are IPv4). See CCA documentation for more info on GeoIP accuracy, whether you need to update the Maxmind DB, and setting up automatic update.
+Note: not tested on IPv6 (my servers are IPv4), but feedback on Stackoverflow indicates the code should work fine for IPv6. See CCA documentation for more info on GeoIP accuracy, whether you need to update the Maxmind DB, and setting up automatic update.
 
 Experts: a hook is provided to allow you to use other GeoIP systems with this plugin.
 
@@ -115,15 +117,7 @@ The easiest way is direct from your WP Dashboard like any other widget:
 
 2.Activate the plugin.
 
-3.Use the Dashboard 'Appearance' -> 'Widgets' menu to configure.
-
-Alternatively:
-
-i. Download the plugin to your computer from the Plugin Page at WordPress.org
-
-ii. use the plugins page (see 1 above) to upload the whole zip file from your computer
-
-iii. Activate and configure as in 2 to 3 above.
+3.Use the *Dashboard->'Settings'->'CCA Goodies'* and the Dashboard->'Appearance'->'Widgets' menus to configure.
 
 
 == Frequently Asked Questions ==
@@ -204,13 +198,18 @@ full answer:  see CCA documentation
 
 == Changelog ==
 
+= 0.7.0 =
+Auto update Maxmind data files option is now available via the Countries tab on the Dashboard->Settings->CCA Goodies setting form.
+Maxmind Directory path is "broadcast" so it can be used by other Wordpress plugins such as the soon to be released Country Caching.
+
 = 0.6.1 =
 * First published version.
 
 == Upgrade Notice ==
 
-= 0.6.1 =
-This is the first version of the widget
+= 0.7.0 =
+Auto update Maxmind data files option is now available via the Countries tab on the Dashboard->Settings->CCA Goodies setting form.
+Maxmind Directory path is "broadcast" so it can be used by other Wordpress plugins such as the soon to be released Country Caching.
 
 == License ==
 

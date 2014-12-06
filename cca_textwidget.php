@@ -4,7 +4,7 @@ Plugin Name: Category Country Aware Wordpress
 Plugin URI: http://means.us.com
 Description: Display different widget content depending on category and visitor location (country)
 Author: Andrew Wrigley
-Version: 0.6.1
+Version: 0.7.0
 Author URI: http://means.us.com/
 */
 /* FOR WP 3.3 ON */
@@ -14,6 +14,48 @@ Author URI: http://means.us.com/
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
+
+if (!defined('CCA_WID_PLUGIN_DIR'))define('CCA_WID_PLUGIN_DIR', plugin_dir_path(__FILE__));  // done here so also in scope for filters/actions
+if (!defined('CCA_MAXMIND_DIR'))define('CCA_MAXMIND_DIR', CCA_WID_PLUGIN_DIR . 'maxmind/');
+define('CCA_X_MAX_CRON','cca_update_maxmind' );
+if (file_exists(CCA_WID_PLUGIN_DIR . 'inc/update_maxmind.php')) include_once(CCA_WID_PLUGIN_DIR . 'inc/update_maxmind.php');
+
+add_action( 'admin_init', 'cca_version_mangement' );
+function cca_version_mangement(){  // credit to "thenbrent" www.wpaustralia.org/wordpress-forums/topic/update-plugin-hook/
+  $plugin_info = get_plugin_data( __FILE__ , false, false );
+	$last_script_ver = get_option('CCA_WID_VERSION');
+	if (empty($last_script_ver)):
+	  update_option('CCA_WID_VERSION', $plugin_info['Version']);
+  elseif ( version_compare( $plugin_info['Version'] , $last_script_ver ) != 0 ) :
+	// this script is later {1} (or earlier {-1}) than the previous installed script so:
+	  // do any upgrade action, then:
+ 
+    update_option('CCA_WID_VERSION', $plugin_info['Version']);
+/*
+		if ($last_script_ver == '0.6.1'):
+      if ( ! wp_next_scheduled( CCA_X_MAX_CRON ))	: 
+         wp_schedule_event( time()+240, 'cca_3weekly', CCA_X_MAX_CRON ); // default values for Maxmind update will be set by constructor
+    	endif;		
+		endif;
+*/
+	endif;
+}
+
+
+register_activation_hook( __FILE__, 'CCA_X_activate' );
+register_deactivation_hook(__FILE__, 'CCA_X_deactivate' );
+
+function CCA_X_deactivate() {
+  wp_clear_scheduled_hook( CCA_X_MAX_CRON );
+}
+
+function CCA_X_activate() {
+  $ccax_options = get_option( 'ccax_options' );
+  if (  (! $ccax_options || $ccax_options['update_maxmind']) && ! wp_next_scheduled( CCA_X_MAX_CRON ))	: // if option not set then first time install - set to update by default
+     wp_schedule_event( time()+10, 'cca_3weekly', CCA_X_MAX_CRON );
+	endif;
+}
+
 
 // Add settings link on Dashboard->plugins page
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'cca_add_sitesettings_link' );
@@ -25,16 +67,12 @@ function cca_add_sitesettings_link( $links ) {
 }
 
 
-if (!defined('CCA_WID_PLUGIN_DIR'))define('CCA_WID_PLUGIN_DIR', plugin_dir_path(__FILE__));  // done here so also in scope for filters/actions
-if (!defined('CCA_MAXMIND_DIR'))define('CCA_MAXMIND_DIR', CCA_WID_PLUGIN_DIR . 'maxmind/');
-
 $cca_ISOcode = '';  //global variable holding visitors country code - saves repeated geoip look-ups
 
 if( is_admin() ):
   define('CCA_X_SETTINGS_SLUG', 'cca-sitewide-settings');
   define('CCA_X_ADMIN_URL','options-general.php?page=' . CCA_X_SETTINGS_SLUG);
   define('CCA_SUPPORT_SITE','wptest.means.us.com');  // need to recreate this on extensions if not defined in case main plugin is removed before extension
-  $cca_calling_script = __FILE__;  // global used by includes
 	include_once(CCA_WID_PLUGIN_DIR . 'inc/sitewide_settings_form.php');
   include_once(CCA_WID_PLUGIN_DIR . 'inc/admin_only.php');
   include_once(CCA_WID_PLUGIN_DIR . 'inc/cca_rss_settings.php');
@@ -46,7 +84,6 @@ endif;
 // **************************************************
 
 // if CCA responsive option is set then include the necessary js with the page
-
 add_action('wp_head', 'cca_responsive_js');
 function cca_responsive_js() {
 	if ( is_admin() ) return;
@@ -73,7 +110,6 @@ function cca_responsive_js() {
 
 
 // insert the advert/additional content at the top of the Post (below the post title)
-
 add_filter( 'the_content', 'cca_insert_content_top',20 );
 function cca_insert_content_top( $content ) {
   if (  ! is_single() || is_admin() ) return $content; //only on posts
@@ -84,7 +120,6 @@ function cca_insert_content_top( $content ) {
 
 
 // identify which widget entry to display, get it, and format it
-
 function ccax_prepare_additional_content( $widtype ) {
 
   $content_widgets = get_option( 'ccax_post_widgets');
@@ -122,8 +157,8 @@ function ccax_prepare_additional_content( $widtype ) {
 	return $additional_content;
 }
   
-//  get the relevant content from the "ad in post" entry
 
+//  get the relevant content from the "ad in post" entry
 function ccax_get_additional_content($additional_content, $ISOcode) {
 	$category_id = apply_filters('cca_override_category', '');
 	$entry = $category_id . '_' . $ISOcode;
@@ -333,7 +368,7 @@ class CCAtextWidget extends WP_Widget {
 	protected $diagnostics;
   protected $ccax_options;
   protected static $default_ccax_options = array( 
-    'disable_geoip' => false, 'display_function' => false, 'responsive_function' => false, 'responsive_px' => '',
+    'disable_geoip' => false, 'display_function' => false, 'responsive_function' => false, 'responsive_px' => '', 'cca_maxmind_dir'=> CCA_MAXMIND_DIR, 'update_maxmind'=>TRUE,
   	'rss_function' => false,   'current_action' => '', 'widtype' => '', 'selected_widget_entry' => '0_-anywhere-'
   );
   public static function set_ccax_defaults() {
@@ -356,11 +391,10 @@ class CCAtextWidget extends WP_Widget {
 		 $this->classname = $widget_ops['classname'];  //css class
      $control_ops = array('width' => 400, 'height' => 650,  'id_base' => 'ccatextwid');
      $this->WP_Widget('ccatextwid', 'CCA WIDGET', $widget_ops, $control_ops);   // text on dashboard widget page
-$this->default_cca_widget_settings = apply_filters('cca_default_form_settings', self::$default_cca_widget_settings_array);
+		 $this->default_cca_widget_settings = apply_filters('cca_default_form_settings', self::$default_cca_widget_settings_array);
 		 $this->default_entry = apply_filters('cca_default_entry', self::$default_entry_array);
-$this->default_cca_widget_settings['cat_0_-anywhere-'] = $this->default_entry; 
+		 $this->default_cca_widget_settings['cat_0_-anywhere-'] = $this->default_entry; 
 		 $this->diagnostics = apply_filters('cca_widget_diagnostics',FALSE);
-
      $this->ccax_options = self::set_ccax_defaults();
 	}
 
@@ -453,7 +487,7 @@ $this->default_cca_widget_settings['cat_0_-anywhere-'] = $this->default_entry;
 
 		// prepare widget Content
 		if ($content_type == 'text') :
-			if (apply_filters('cca_text_allow_php', FALSE)) :  // maybe add a version check here for additional security
+			if (apply_filters('cca_text_allow_php', FALSE)) :
 			  ob_start();
         eval('?>' . $content);  // do php
         $content = ob_get_contents();
@@ -967,6 +1001,15 @@ function cca_echo_settings($cca_entry, $instance) {
   echo '<p>' .  __('CCAX Extension Settings') . ':<br />';
   $ccax_values = esc_html(print_r(get_option( 'ccax_options' ), TRUE ));
 	echo str_replace( '[' , '<br /> [' , $ccax_values) . '</p></div>';
+
+
+
+  $ccax_values = esc_html(print_r(get_option( 'CCA_VERSION_INFO' ), TRUE ));
+	echo str_replace( '[' , '<br /> [' , $ccax_values) . '</p>';
+
+
+
+
 }
 
 function cca_encrypt_decrypt($action, $string, $secret_key, $secret_iv) {  // credit: http://naveensnayak.wordpress.com/

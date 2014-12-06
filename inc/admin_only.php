@@ -1,6 +1,7 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+/* moved to main script and modified to option with path info including Maxmind
 function cca_version_mangement(){  // credit to "thenbrent" www.wpaustralia.org/wordpress-forums/topic/update-plugin-hook/
   global $cca_calling_script;
 	$plugin_info = get_plugin_data( $cca_calling_script , false, false );
@@ -14,7 +15,7 @@ function cca_version_mangement(){  // credit to "thenbrent" www.wpaustralia.org/
 	endif;
 }
 add_action( 'admin_init', 'cca_version_mangement' );
-
+*/
 
 // ensure js & CSS for dashboard forms is sent to browser
 function AW_CCA_load_admincssjs() {
