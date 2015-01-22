@@ -1,0 +1,1 @@
+test file to see if sites permissions allow file open for write

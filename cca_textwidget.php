@@ -4,7 +4,7 @@ Plugin Name: Category Country Aware Wordpress
 Plugin URI: http://means.us.com
 Description: Display different widget content depending on category and visitor location (country)
 Author: Andrew Wrigley
-Version: 0.7.0
+Version: 0.7.7
 Author URI: http://means.us.com/
 */
 /* FOR WP 3.3 ON */
@@ -31,6 +31,16 @@ function cca_version_mangement(){  // credit to "thenbrent" www.wpaustralia.org/
 	  // do any upgrade action, then:
  
     update_option('CCA_WID_VERSION', $plugin_info['Version']);
+// 0.7.7
+		$ccax_maxmind_status = get_option( 'ccax_maxmind_status' );
+		if (! $ccax_maxmind_status) :
+		  $ccax_maxmind_status = array( 'script' => CCA_MAXMIND_DIR, 'data' => CCA_MAXMIND_DIR);
+		  update_option('ccax_maxmind_status', $ccax_maxmind_status);
+		elseif (empty($ccax_maxmind_status['script'])) :
+		  $ccax_maxmind_status['script'] = CCA_MAXMIND_DIR;
+			$ccax_maxmind_status['data'] = CCA_MAXMIND_DIR;
+			update_option('ccax_maxmind_status', $ccax_maxmind_status);
+		endif;
 /*
 		if ($last_script_ver == '0.6.1'):
       if ( ! wp_next_scheduled( CCA_X_MAX_CRON ))	: 
@@ -282,14 +292,44 @@ if ( ! class_exists( 'CCAgeoip' ) ) :
       } elseif ( filter_var($visitorIP, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ) {$geoIPdb = 'GeoIPv6.dat';}
     	else return '';
 
-      if (file_exists(CCA_MAXMIND_DIR . 'geoip.inc') && file_exists(CCA_MAXMIND_DIR . $geoIPdb))include_once(CCA_MAXMIND_DIR. 'geoip.inc'); else return '';
-			$gi = geoip_open(CCA_MAXMIND_DIR . $geoIPdb, GEOIP_STANDARD);
-  
-      if($geoIPdb == 'GeoIP.dat') $cca_ISOcode = geoip_country_code_by_addr($gi, $visitorIP);
-       else $cca_ISOcode = geoip_country_code_by_addr_v6($gi, $visitorIP);
-      geoip_close($gi);
+
+// 0.7.7
+$cca_maxmind_info = get_option('ccax_maxmind_status');
+if (! empty($cca_maxmind_info) && ! empty($cca_maxmind_info['data']) && file_exists( $cca_maxmind_info['data'] . $geoIPdb ) ) :
+  $cca_maxmind_data_dir = $cca_maxmind_info['data'];
+elseif ( file_exists(CCA_MAXMIND_DIR . $geoIPdb)) :
+  $cca_maxmind_data_dir = CCA_MAXMIND_DIR;
+else:
+  return '';
+endif;
+if (version_compare(PHP_VERSION, '5.3.0') >= 0) :
+  if (! file_exists(CCA_MAXMIND_DIR . 'cc_geoip.inc')) : return ''; endif;
+  include_once(CCA_MAXMIND_DIR. 'cc_geoip.inc');
+
+	$gi = \cc_max\geoip_open($cca_maxmind_data_dir . $geoIPdb, GEOIP_STANDARD);
+  if($geoIPdb == 'GeoIP.dat') :
+	   $cca_ISOcode = \cc_max\geoip_country_code_by_addr($gi, $visitorIP);
+  else:
+	   $cca_ISOcode = \cc_max\geoip_country_code_by_addr_v6($gi, $visitorIP);
+  endif;
+  \cc_max\geoip_close($gi);
+else:
+  if (! file_exists(CCA_MAXMIND_DIR . 'geoip.inc')) : return ''; endif;
+  include_once(CCA_MAXMIND_DIR. 'geoip.inc');
+
+	$gi = geoip_open($cca_maxmind_data_dir . $geoIPdb, GEOIP_STANDARD);
+  if($geoIPdb == 'GeoIP.dat') :
+	   $cca_ISOcode = geoip_country_code_by_addr($gi, $visitorIP);
+  else:
+	   $cca_ISOcode = geoip_country_code_by_addr_v6($gi, $visitorIP);
+  endif;
+  geoip_close($gi);
+endif;
+
+
       if (ctype_alpha($cca_ISOcode)) return strtoupper($cca_ISOcode);
 			return '';
+
 
     }  // end do_lookup()
 
@@ -991,10 +1031,22 @@ endif;
 // for diagnostics
 function cca_echo_settings($cca_entry, $instance) {
   $cca_entry_values = esc_html(print_r($cca_entry, TRUE ));
-  if (! defined('CCA_MAXMIND_DIR') || validate_file( CCA_MAXMIND_DIR ) || ! file_exists(CCA_MAXMIND_DIR. 'geoip.inc')
-     || ! file_exists(CCA_MAXMIND_DIR . 'GeoIP.dat') || ! file_exists(CCA_MAXMIND_DIR . 'GeoIPv6.dat') ) : 
+// 0.7.7
+  $cca_maxmind_info = get_option('ccax_maxmind_status');
+	if (empty($cca_maxmind_info)  || empty($cca_maxmind_info['data'])) :
+	  $cca_maxmind_data_dir = CCA_MAXMIND_DIR;
+	else:
+	  $cca_maxmind_data_dir = $cca_maxmind_info['data'];
+	endif;
+  echo '<p>Maxmind Directory: ' . esc_html($cca_maxmind_data_dir) . '</p>';
+  if (! defined('CCA_MAXMIND_DIR') || validate_file( CCA_MAXMIND_DIR ) || ! file_exists(CCA_MAXMIND_DIR. 'cc_geoip.inc')
+	     || ! file_exists($cca_maxmind_data_dir . 'GeoIP.dat') || ! file_exists($cca_maxmind_data_dir . 'GeoIPv6.dat') ) : 
 	  echo '<p class="cca-red">' . __("Warning the Maxmind directory is invalid, or one or more Maxmind files are missing") . '</p>';
   endif;
+
+
+
+
 	$instance = esc_html(print_r($instance, TRUE ));
   echo '<div class="cca-brown"><p>' . __('Relevant Widget Entry Settings found:') . '<br />' . str_replace( '[' , '<br /> [' , $cca_entry_values) . '</p>';
 	echo '<p>' . __('FULL Widget Settings:') . '<br />' . $instance . '</p>';
@@ -1007,10 +1059,8 @@ function cca_echo_settings($cca_entry, $instance) {
   $ccax_values = esc_html(print_r(get_option( 'CCA_VERSION_INFO' ), TRUE ));
 	echo str_replace( '[' , '<br /> [' , $ccax_values) . '</p>';
 
-
-
-
 }
+
 
 function cca_encrypt_decrypt($action, $string, $secret_key, $secret_iv) {  // credit: http://naveensnayak.wordpress.com/
   $output = false;

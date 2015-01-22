@@ -3,7 +3,7 @@ Contributors: wrigs1
 Donate link: http://means.us.com/
 Tags: Text Widget, RSS Widget, Category, Country, GeoIp, Geo-Location, Advert, Advertisement, Adverts, News Feed, RSS
 Requires at least: 3.3
-Tested up to: 4.0
+Tested up to: 4.1
 Stable tag: 0.7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -198,6 +198,11 @@ full answer:  see CCA documentation
 
 == Changelog ==
 
+= 0.7.7 =
+Bugfixes: 1. resolves compatibility issue with certain GeoIP plugins that prevented display of CCA widgets/content.
+2. Maxmind data update: If your site's permissions prevent upload of latest Maxmind data to the plugins directory then the WP upload directory is used.
+Maxmind Directory path is now "broadcast" so it can be used by the new "Country Caching Extension" plugin.
+
 = 0.7.0 =
 Auto update Maxmind data files option is now available via the Countries tab on the Dashboard->Settings->CCA Goodies setting form.
 Maxmind Directory path is "broadcast" so it can be used by other Wordpress plugins such as the soon to be released Country Caching.
@@ -207,9 +212,10 @@ Maxmind Directory path is "broadcast" so it can be used by other Wordpress plugi
 
 == Upgrade Notice ==
 
-= 0.7.0 =
-Auto update Maxmind data files option is now available via the Countries tab on the Dashboard->Settings->CCA Goodies setting form.
-Maxmind Directory path is "broadcast" so it can be used by other Wordpress plugins such as the soon to be released Country Caching.
+= 0.7.7 =
+Bugfixes: 1. resolves compatibility issue with some GeoIP plugins that prevented display of CCA widgets/content.
+2. Maxmind data update: If your site's permissions prevent upload of latest Maxmind data to the plugins directory then the WP upload directory is used.
+Maxmind Directory path is now "broadcast" so it can be used by the new "Country Caching Extension" plugin.
 
 == License ==
 

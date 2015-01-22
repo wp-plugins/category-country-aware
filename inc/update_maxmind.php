@@ -67,6 +67,22 @@ function cca_update_maxmind() {
 	    $cca_maxmind_dir = $ccax_options['cca_maxmind_dir'];
 
     if ( validate_file($cca_maxmind_dir) === 0 && file_exists($cca_maxmind_dir) ) :  	
+
+
+// 0.7.7
+$ccax_maxmind_status['script'] = $cca_maxmind_dir;
+$ccax_maxmind_status['data'] = $cca_maxmind_dir;
+if (! $ftest = @fopen($cca_maxmind_dir . 'testwrite.txt', 'wb')) :
+  require_once(ABSPATH.'/wp-admin/includes/file.php');
+  $wp_upload_dir_info = wp_upload_dir();
+  $cca_maxmind_dir = $wp_upload_dir_info['basedir'] . '/';
+  $ccax_maxmind_status['data'] = $cca_maxmind_dir;
+endif;
+update_option('ccax_maxmind_status',$ccax_maxmind_status);
+// 0.7.7 end
+
+
+
       $uploadedFile = $cca_maxmind_dir . $ipv4_gz;
       $extractedFile =  $cca_maxmind_dir . $ipv4_dat;
 	  	$error_prefix = __("Error Maxmind IPv4 data file has NOT been updated:\n\n");
