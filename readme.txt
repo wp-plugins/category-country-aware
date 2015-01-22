@@ -4,7 +4,7 @@ Donate link: http://means.us.com/
 Tags: Text Widget, RSS Widget, Category, Country, GeoIp, Geo-Location, Advert, Advertisement, Adverts, News Feed, RSS
 Requires at least: 3.3
 Tested up to: 4.1
-Stable tag: 0.7.7
+Stable tag: 0.7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
