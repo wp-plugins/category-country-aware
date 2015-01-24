@@ -1,28 +1,20 @@
 <?php
-/*
-Plugin Name: Category Country Aware Wordpress
-Plugin URI: http://means.us.com
-Description: Display different widget content depending on category and visitor location (country)
-Author: Andrew Wrigley
-Version: 0.7.7
-Author URI: http://means.us.com/
-*/
-/* FOR WP 3.3 ON */
-
-// outside of classes; constants and functions for "internal" use are prefixed "CCA_" for widget and "CCAX_" for extension/dashboard stuff
-// CSS classes and user/developer filters/actions/shortcodes are prefixed "cca_" or "cca-" for CSS
-
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+
 if (!defined('CCA_WID_PLUGIN_DIR'))define('CCA_WID_PLUGIN_DIR', plugin_dir_path(__FILE__));  // done here so also in scope for filters/actions
+# if (!defined('CCA_INIT_FILE'))define('CCA_INIT_FILE', CCA_WID_PLUGIN_DIR . 'cca_init.php');
 if (!defined('CCA_MAXMIND_DIR'))define('CCA_MAXMIND_DIR', CCA_WID_PLUGIN_DIR . 'maxmind/');
 define('CCA_X_MAX_CRON','cca_update_maxmind' );
 if (file_exists(CCA_WID_PLUGIN_DIR . 'inc/update_maxmind.php')) include_once(CCA_WID_PLUGIN_DIR . 'inc/update_maxmind.php');
 
 add_action( 'admin_init', 'cca_version_mangement' );
 function cca_version_mangement(){  // credit to "thenbrent" www.wpaustralia.org/wordpress-forums/topic/update-plugin-hook/
-  $plugin_info = get_plugin_data( __FILE__ , false, false );
+// 0.7.7
+#  $plugin_info = get_plugin_data( __FILE__ , false, false );
+  $plugin_info = get_plugin_data( CCA_INIT_FILE , false, false );
+//
 	$last_script_ver = get_option('CCA_WID_VERSION');
 	if (empty($last_script_ver)):
 	  update_option('CCA_WID_VERSION', $plugin_info['Version']);
@@ -51,15 +43,18 @@ function cca_version_mangement(){  // credit to "thenbrent" www.wpaustralia.org/
 	endif;
 }
 
+// 0.7.7
+#register_activation_hook( __FILE__, 'CCA_main_activate' );
+#register_deactivation_hook(__FILE__, 'CCA_main_deactivate' );
+register_activation_hook( CCA_INIT_FILE, 'CCA_main_activate' );
+register_deactivation_hook(CCA_INIT_FILE, 'CCA_main_deactivate' );
+//
 
-register_activation_hook( __FILE__, 'CCA_X_activate' );
-register_deactivation_hook(__FILE__, 'CCA_X_deactivate' );
-
-function CCA_X_deactivate() {
+function CCA_main_deactivate() {
   wp_clear_scheduled_hook( CCA_X_MAX_CRON );
 }
 
-function CCA_X_activate() {
+function CCA_main_activate() {
   $ccax_options = get_option( 'ccax_options' );
   if (  (! $ccax_options || $ccax_options['update_maxmind']) && ! wp_next_scheduled( CCA_X_MAX_CRON ))	: // if option not set then first time install - set to update by default
      wp_schedule_event( time()+10, 'cca_3weekly', CCA_X_MAX_CRON );
@@ -68,7 +63,9 @@ function CCA_X_activate() {
 
 
 // Add settings link on Dashboard->plugins page
-add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'cca_add_sitesettings_link' );
+// 0.7.7
+#add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'cca_add_sitesettings_link' );
+add_filter( 'plugin_action_links_' . plugin_basename( CCA_INIT_FILE ), 'cca_add_sitesettings_link' );
 function cca_add_sitesettings_link( $links ) {
 	return array_merge(
 		array('settings' => '<a href="' . admin_url(CCA_X_ADMIN_URL) . '">Sitewide Settings</a>'),
@@ -302,7 +299,7 @@ elseif ( file_exists(CCA_MAXMIND_DIR . $geoIPdb)) :
 else:
   return '';
 endif;
-if (version_compare(PHP_VERSION, '5.3.0') >= 0) :
+//if (version_compare(PHP_VERSION, '5.3.0') >= 0) :
   if (! file_exists(CCA_MAXMIND_DIR . 'cc_geoip.inc')) : return ''; endif;
   include_once(CCA_MAXMIND_DIR. 'cc_geoip.inc');
 
@@ -313,6 +310,7 @@ if (version_compare(PHP_VERSION, '5.3.0') >= 0) :
 	   $cca_ISOcode = \cc_max\geoip_country_code_by_addr_v6($gi, $visitorIP);
   endif;
   \cc_max\geoip_close($gi);
+/*
 else:
   if (! file_exists(CCA_MAXMIND_DIR . 'geoip.inc')) : return ''; endif;
   include_once(CCA_MAXMIND_DIR. 'geoip.inc');
@@ -325,7 +323,7 @@ else:
   endif;
   geoip_close($gi);
 endif;
-
+*/
 
       if (ctype_alpha($cca_ISOcode)) return strtoupper($cca_ISOcode);
 			return '';
@@ -374,6 +372,11 @@ endif;
 				endif;
 				return do_shortcode( $content );
 			endif;
+
+
+
+
+
 			$content = apply_filters('cca_display_' . $selection, $content, $ccodes, $ISOcode);	// for future options
 			return $content;
 		}

@@ -109,7 +109,7 @@ subsequent versions - so hold fire on publishing your category related Twitter f
 
 == Installation ==
 
-Requirements: Wordpress 3.3 and up (tested on WP 3.8.1 to 4.0 with PHP 5.2, 5.3 and 5.4)
+Requirements: Wordpress 3.3 and up, and PHP 5.3 or greater. Tested on WP 3.8.1 to 4.1 with PHP 5.3 and 5.4.
 
 The easiest way is direct from your WP Dashboard like any other widget:
 
@@ -198,7 +198,8 @@ full answer:  see CCA documentation
 
 == Changelog ==
 
-= 0.7.7 =
+= 0.8.0 =
+PHP 5.2.x is no longer supported. The CCA plugin now requires PHP version 5.3 or greater.
 Bugfixes: 1. resolves compatibility issue with certain GeoIP plugins that prevented display of CCA widgets/content.
 2. Maxmind data update: If your site's permissions prevent upload of latest Maxmind data to the plugins directory then the WP upload directory is used.
 Maxmind Directory path is now "broadcast" so it can be used by the new "Country Caching Extension" plugin.
@@ -212,9 +213,9 @@ Maxmind Directory path is "broadcast" so it can be used by other Wordpress plugi
 
 == Upgrade Notice ==
 
-= 0.7.7 =
-Bugfixes: 1. resolves compatibility issue with some GeoIP plugins that prevented display of CCA widgets/content.
-2. Maxmind data update: If your site's permissions prevent upload of latest Maxmind data to the plugins directory then the WP upload directory is used.
+= 0.8.0 =
+PHP 5.2.x is no longer supported. The CCA plugin now requires PHP version 5.3 or greater. Bugfixes: a) resolves compatibility issue with some GeoIP plugins that prevented display of CCA widgets/content.
+b) Maxmind data update: If your site's permissions prevent upload of latest Maxmind data to the plugins directory then the WP upload directory is used.
 Maxmind Directory path is now "broadcast" so it can be used by the new "Country Caching Extension" plugin.
 
 == License ==
