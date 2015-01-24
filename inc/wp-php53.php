@@ -1,4 +1,10 @@
 <?php
+/* save reinventing the wheel code source from QuickCache:(
+  Author: s2Member® / WebSharks, Inc. Author URI: http://www.s2member.com
+	Plugin URI: http://www.websharks-inc.com/product/quick-cache/
+)
+*/
+
 if(!function_exists('wp_php53'))
 {
 	/**
