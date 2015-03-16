@@ -4,7 +4,7 @@ Plugin Name: Category Country Aware Wordpress
 Plugin URI: http://means.us.com
 Description: Display different widget content depending on category and visitor location (country)
 Author: Andrew Wrigley
-Version: 0.8.0
+Version: 0.8.5
 Author URI: http://means.us.com/
 */
 /* FOR WP 3.3 ON */
@@ -20,6 +20,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 if (!defined('CCA_INIT_FILE'))define('CCA_INIT_FILE', __FILE__ );
 
-if(require(dirname(__FILE__).'/inc/wp-php53.php')) // TRUE if running PHP v5.3+.
+if(require(dirname(__FILE__).'/inc/wp-php53.php')): // TRUE if running PHP v5.3+.
 	require_once 'cca_textwidget.php';
-else wp_php53_notice('Category Country Aware Wordpress');
+else:
+   wp_php53_notice('Category Country Aware Wordpress');
+ENDIF;

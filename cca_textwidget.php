@@ -2,53 +2,47 @@
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-
 if (!defined('CCA_WID_PLUGIN_DIR'))define('CCA_WID_PLUGIN_DIR', plugin_dir_path(__FILE__));  // done here so also in scope for filters/actions
-# if (!defined('CCA_INIT_FILE'))define('CCA_INIT_FILE', CCA_WID_PLUGIN_DIR . 'cca_init.php');
 if (!defined('CCA_MAXMIND_DIR'))define('CCA_MAXMIND_DIR', CCA_WID_PLUGIN_DIR . 'maxmind/');
+if (!defined('CCA_MAXMIND_DATA_DIR')) define('CCA_MAXMIND_DATA_DIR', WP_CONTENT_DIR . '/cca_maxmind_data/');
 define('CCA_X_MAX_CRON','cca_update_maxmind' );
 if (file_exists(CCA_WID_PLUGIN_DIR . 'inc/update_maxmind.php')) include_once(CCA_WID_PLUGIN_DIR . 'inc/update_maxmind.php');
 
 add_action( 'admin_init', 'cca_version_mangement' );
+
 function cca_version_mangement(){  // credit to "thenbrent" www.wpaustralia.org/wordpress-forums/topic/update-plugin-hook/
-// 0.7.7
-#  $plugin_info = get_plugin_data( __FILE__ , false, false );
   $plugin_info = get_plugin_data( CCA_INIT_FILE , false, false );
-//
 	$last_script_ver = get_option('CCA_WID_VERSION');
 	if (empty($last_script_ver)):
 	  update_option('CCA_WID_VERSION', $plugin_info['Version']);
-  elseif ( version_compare( $plugin_info['Version'] , $last_script_ver ) != 0 ) :
-	// this script is later {1} (or earlier {-1}) than the previous installed script so:
-	  // do any upgrade action, then:
- 
-    update_option('CCA_WID_VERSION', $plugin_info['Version']);
-// 0.7.7
-		$ccax_maxmind_status = get_option( 'ccax_maxmind_status' );
-		if (! $ccax_maxmind_status) :
-		  $ccax_maxmind_status = array( 'script' => CCA_MAXMIND_DIR, 'data' => CCA_MAXMIND_DIR);
-		  update_option('ccax_maxmind_status', $ccax_maxmind_status);
-		elseif (empty($ccax_maxmind_status['script'])) :
-		  $ccax_maxmind_status['script'] = CCA_MAXMIND_DIR;
-			$ccax_maxmind_status['data'] = CCA_MAXMIND_DIR;
-			update_option('ccax_maxmind_status', $ccax_maxmind_status);
-		endif;
-/*
-		if ($last_script_ver == '0.6.1'):
-      if ( ! wp_next_scheduled( CCA_X_MAX_CRON ))	: 
-         wp_schedule_event( time()+240, 'cca_3weekly', CCA_X_MAX_CRON ); // default values for Maxmind update will be set by constructor
-    	endif;		
-		endif;
-*/
-	endif;
+  else:
+	   $new_ver = $plugin_info['Version'];
+	   $version_status = version_compare( $new_ver , $last_script_ver );
+     // can test if script is later {1}, or earlier {-1} than the previous installed e.g. if ($version_status > 0 &&  version_compare( "0.6.3" , $last_script_ver )  > 0) :
+	   // do any upgrade action, then:
+		 if ($version_status != 0): 
+ 		   if (version_compare( "0.8.4" , $last_script_ver )  >  0):
+         if (class_exists('CCAmaxmindSave')):
+				    $do_max = new CCAmaxmindSave();
+						$do_max->save_maxmind(TRUE);
+	 					unset($do_max);
+						$ccax_options = get_option('ccax_options'); 
+						if ($ccax_options):
+						  $ccax_options['init_geoip']= TRUE;
+							update_option('ccax_options',$ccax_options);
+						endif;
+				 endif;
+				 // delete old unused option for maxmind
+				 delete_option( 'ccax_maxmind_status' );
+      endif;		 
+		  update_option('CCA_WID_VERSION', $plugin_info['Version']);
+    endif;
+  endif;
 }
 
-// 0.7.7
-#register_activation_hook( __FILE__, 'CCA_main_activate' );
-#register_deactivation_hook(__FILE__, 'CCA_main_deactivate' );
 register_activation_hook( CCA_INIT_FILE, 'CCA_main_activate' );
 register_deactivation_hook(CCA_INIT_FILE, 'CCA_main_deactivate' );
-//
+
 
 function CCA_main_deactivate() {
   wp_clear_scheduled_hook( CCA_X_MAX_CRON );
@@ -63,8 +57,6 @@ function CCA_main_activate() {
 
 
 // Add settings link on Dashboard->plugins page
-// 0.7.7
-#add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'cca_add_sitesettings_link' );
 add_filter( 'plugin_action_links_' . plugin_basename( CCA_INIT_FILE ), 'cca_add_sitesettings_link' );
 function cca_add_sitesettings_link( $links ) {
 	return array_merge(
@@ -96,6 +88,9 @@ function cca_responsive_js() {
 	if ( is_admin() ) return;
   $ccax_options = get_option( 'ccax_options');
   if ( $ccax_options  && $ccax_options['responsive_function'] && ctype_digit($ccax_options['responsive_px']) ) :
+
+// maybe also add php mobile detect script http://detectmobilebrowsers.com/  - and add as ticj option - server version won't work with cache
+
 ?>
 <script>
   window.addEventListener("resize", ccax_width_check);
@@ -290,44 +285,18 @@ if ( ! class_exists( 'CCAgeoip' ) ) :
     	else return '';
 
 
-// 0.7.7
-$cca_maxmind_info = get_option('ccax_maxmind_status');
-if (! empty($cca_maxmind_info) && ! empty($cca_maxmind_info['data']) && file_exists( $cca_maxmind_info['data'] . $geoIPdb ) ) :
-  $cca_maxmind_data_dir = $cca_maxmind_info['data'];
-elseif ( file_exists(CCA_MAXMIND_DIR . $geoIPdb)) :
-  $cca_maxmind_data_dir = CCA_MAXMIND_DIR;
-else:
-  return '';
-endif;
-//if (version_compare(PHP_VERSION, '5.3.0') >= 0) :
-  if (! file_exists(CCA_MAXMIND_DIR . 'cc_geoip.inc')) : return ''; endif;
+  if ( ! file_exists(CCA_MAXMIND_DIR . 'cc_geoip.inc') || ! file_exists(CCA_MAXMIND_DATA_DIR . $geoIPdb) ) : return ''; endif;
   include_once(CCA_MAXMIND_DIR. 'cc_geoip.inc');
-
-	$gi = \cc_max\geoip_open($cca_maxmind_data_dir . $geoIPdb, GEOIP_STANDARD);
+	$gi = \cc_max\geoip_open(CCA_MAXMIND_DATA_DIR . $geoIPdb, GEOIP_STANDARD);
   if($geoIPdb == 'GeoIP.dat') :
 	   $cca_ISOcode = \cc_max\geoip_country_code_by_addr($gi, $visitorIP);
   else:
 	   $cca_ISOcode = \cc_max\geoip_country_code_by_addr_v6($gi, $visitorIP);
   endif;
   \cc_max\geoip_close($gi);
-/*
-else:
-  if (! file_exists(CCA_MAXMIND_DIR . 'geoip.inc')) : return ''; endif;
-  include_once(CCA_MAXMIND_DIR. 'geoip.inc');
-
-	$gi = geoip_open($cca_maxmind_data_dir . $geoIPdb, GEOIP_STANDARD);
-  if($geoIPdb == 'GeoIP.dat') :
-	   $cca_ISOcode = geoip_country_code_by_addr($gi, $visitorIP);
-  else:
-	   $cca_ISOcode = geoip_country_code_by_addr_v6($gi, $visitorIP);
-  endif;
-  geoip_close($gi);
-endif;
-*/
 
       if (ctype_alpha($cca_ISOcode)) return strtoupper($cca_ISOcode);
 			return '';
-
 
     }  // end do_lookup()
 
@@ -372,11 +341,6 @@ endif;
 				endif;
 				return do_shortcode( $content );
 			endif;
-
-
-
-
-
 			$content = apply_filters('cca_display_' . $selection, $content, $ccodes, $ISOcode);	// for future options
 			return $content;
 		}
@@ -411,8 +375,8 @@ class CCAtextWidget extends WP_Widget {
 	protected $diagnostics;
   protected $ccax_options;
   protected static $default_ccax_options = array( 
-    'disable_geoip' => false, 'display_function' => false, 'responsive_function' => false, 'responsive_px' => '', 'cca_maxmind_dir'=> CCA_MAXMIND_DIR, 'update_maxmind'=>TRUE,
-  	'rss_function' => false,   'current_action' => '', 'widtype' => '', 'selected_widget_entry' => '0_-anywhere-'
+    'disable_geoip' => false, 'display_function' => false, 'responsive_function' => false, 'responsive_px' => '', 'cca_maxmind_dir'=> CCA_MAXMIND_DIR, 'update_maxmind'=>FALSE,
+  	'rss_function' => false,   'current_action' => '', 'widtype' => '', 'selected_widget_entry' => '0_-anywhere-', 'init_geoip'=>FALSE
   );
   public static function set_ccax_defaults() {
     if ( get_option( 'ccax_options' ) ) :
@@ -437,7 +401,8 @@ class CCAtextWidget extends WP_Widget {
 		 $this->default_cca_widget_settings = apply_filters('cca_default_form_settings', self::$default_cca_widget_settings_array);
 		 $this->default_entry = apply_filters('cca_default_entry', self::$default_entry_array);
 		 $this->default_cca_widget_settings['cat_0_-anywhere-'] = $this->default_entry; 
-		 $this->diagnostics = apply_filters('cca_widget_diagnostics',FALSE);
+$this->diagnostics = FALSE;
+#		 $this->diagnostics = apply_filters('cca_widget_diagnostics',FALSE);
      $this->ccax_options = self::set_ccax_defaults();
 	}
 
@@ -453,13 +418,13 @@ class CCAtextWidget extends WP_Widget {
 			endif;
     endif;
 
-    if(! current_user_can( 'manage_options' )) :  // don't dispaly widget to non admin users if in preview mode
+    if(! current_user_can( 'manage_options' )) :  // don't display widget to non admin users if in preview mode
 		  if (apply_filters('cca_preview_mode',$instance['preview_mode'])) : return; endif;
 		  ini_set('display_errors',0);
-    elseif ($this->diagnostics  || $instance['above_widget'] == '999'): 
-		  $this->diagnostics = TRUE;
-		  ini_set('display_errors',1);  
-			echo '<p>' . __('PHP Warning and Diagnostic mode for Admin User. If you are using a caching plugin or service, make sure it does not cache the admin user', 'aw_ccawidget')  . '.:<br /><br />' . __('Searching for relevant category/country entry....', 'aw_ccawidget') . '</p>';
+    elseif (! empty($this->ccax_options['diagnostics'])): 
+		   $this->diagnostics = TRUE;
+		   ini_set('display_errors',1);  
+			echo '<p>' . __('PHP Warning and Diagnostic mode ONLY VISIBLE TO ADMIN USER. If you are using a caching plugin or service, make sure it does not cache the admin user', 'aw_ccawidget')  . ':<br /><br />' . __('Searching for relevant category/country entry....', 'aw_ccawidget') . '</p>';
 		endif;
 
 		// get the ISO country code for the visitor's location
@@ -505,7 +470,7 @@ class CCAtextWidget extends WP_Widget {
     if ($category_id != 'no recognised content type') {
     	// check if there is a content entry for this page's category and visitor locale
       $entry_key = 'cat_' . $category_id . '_' . $ISOcode;
-			if ($this->diagnostics) echo '<span class="cca-brown">' . esc_html($entry_key) . '</span><br />';
+			if ( $this->diagnostics ) echo '<span class="cca-brown">' . esc_html($entry_key) . '</span><br />';
       if ( empty($instance[$entry_key]) ) return FALSE; // no entry for this category/country
       $entry=$instance[$entry_key];
 			if ($this->diagnostics) cca_echo_settings($entry, $instance);
@@ -562,7 +527,7 @@ class CCAtextWidget extends WP_Widget {
   			if ( ! empty($full_width_img)) : $widget_img_style = ' #' . $this->id  . ' img{width: auto !important; width: 100%;max-width: 100%;min-width: 100%}'; endif;
   		endif;
 
-      if ($above_widget == '999') $above_widget = '';  // 999 is diagnostics easter egg - no good for display of widget
+#      if ($above_widget == '999') $above_widget = '';  // 999 is diagnostics easter egg - no good for display of widget
       if (is_numeric($above_widget) && $above_widget < 0 && ctype_alpha($above_widget_unit) ) :
   		  $widget_style .=   'margin-top:' . $above_widget . $above_widget_unit .' !important;';
   		endif;
@@ -784,7 +749,7 @@ class CCAtextWidget extends WP_Widget {
 
 
   // **************************************************
-  // SETTINGS FORM
+  // WIDGET SETTINGS FORM
   // **************************************************
 
   function form($instance) {
@@ -813,14 +778,29 @@ class CCAtextWidget extends WP_Widget {
     $instance = apply_filters('cca_alter_form_values', $instance);
 
     $title_type = strip_tags($instance['title_type']);
-		if ($this->diagnostics): 
-			echo '<p class="cca-brown">' . __('Diagnostic mode (set in AW_CCA extension) is ON; see bottom of this form for values set.', 'aw_ccawidget') . '</p>';
+		if (!empty($this->ccax_options['diagnostics']) ): 
+			echo '<p class="cca-brown">' . __('Diagnostic mode (set in CCA Site Settings) is ON; see bottom of this form for values set.', 'aw_ccawidget') . '</p>';
 			echo '<p class="cca-brown">' . __('If you are using a caching plugin or service, make sure it is not caching dashboard pages/admin user', 'aw_ccawidget') . '.</p>';
 		endif;
 ?>	
 		<p><a href="<?php echo CCA_X_ADMIN_URL; ?>&tab=general#resp">CCA site-wide settings</a> &nbsp; <?php _e('Link for', 'aw_ccawidget'); ?>: 
 		<a href="http://<?php echo CCA_SUPPORT_SITE ?>/2014/11/category-country-aware-wordpress/#tabs-1-2" target="_blank"><?php _e('User Guide', 'aw_ccawidget'); ?></a>
 <?php
+
+		$no_geoip = FALSE;
+    if ( empty($_SERVER["HTTP_CF_IPCOUNTRY"])  && ! $this->ccax_options['disable_geoip'] && ! file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIP.dat') ) :
+		  if (empty($this->ccax_options['init_geoip']) ):
+        $geoip_warn = __('You have not set your GeoIP options. Either check the option to "Initalize GeoIP" or the option to "Disable GeoIP" on the');
+    	  $geoip_warn .= ' <a href="' . CCA_X_ADMIN_URL . '&tab=general#resp">CCA Site Settings form</a>.';
+			else:
+				$geoip_warn = __('The Maxmind country lookup files are missing - see the ');
+				$geoip_warn .= '<a href="http://' . CCA_SUPPORT_SITE . '/2014/11/category-country-aware-wordpress/#tabs-1-2" target="_blank">' . _e('User Guide', 'aw_ccawidget') . '</a> ' . __('for the solution.');
+			endif;
+      if (! empty($instance['status_msg'])) : $geoip_warn .= '<br /><br />'; endif;
+      $status_msg = $geoip_warn . $status_msg;
+			$instance['msg_type'] = 'warn';
+			$no_geoip = TRUE;
+    endif;
     if (! empty($status_msg)) : 
       echo '<div class="cca-msg cca-msg-' . $instance['msg_type'] . '">' . $status_msg . '</div><br />';
     endif;
@@ -867,7 +847,7 @@ class CCAtextWidget extends WP_Widget {
     		// country dropdown box	
     	  echo '<br />' . __('AND', 'aw_ccawidget') . '<br /> ' . __("Visitor's country", 'aw_ccawidget') . ': ';
 
-    	  if ($disable_geoip) : ?>
+    	  if ($disable_geoip || $no_geoip) : ?>
     			  <select id="<?php echo $fieldId_prefix; ?>selected_country" disabled="disabled">
     				  <option value="-anywhere-" selected>"any" / "other" (Default)</option>
     				</select></p>
@@ -1021,7 +1001,7 @@ endif;
       if (! empty($status_msg)) : 
         echo '<br /><div class="cca-msg cca-msg-' . $instance['msg_type'] . '">' . $status_msg . '</div>';
       endif;
-		  if ($this->diagnostics  || $above_widget == '999'): cca_echo_settings($the_entry, $instance); endif;
+		  if (!empty($this->ccax_options['diagnostics'])  ): cca_echo_settings($the_entry, $instance); endif;
 			echo '<br /><br />';
     }  // end form function
 
@@ -1034,34 +1014,18 @@ endif;
 // for diagnostics
 function cca_echo_settings($cca_entry, $instance) {
   $cca_entry_values = esc_html(print_r($cca_entry, TRUE ));
-// 0.7.7
-  $cca_maxmind_info = get_option('ccax_maxmind_status');
-	if (empty($cca_maxmind_info)  || empty($cca_maxmind_info['data'])) :
-	  $cca_maxmind_data_dir = CCA_MAXMIND_DIR;
-	else:
-	  $cca_maxmind_data_dir = $cca_maxmind_info['data'];
-	endif;
-  echo '<p>Maxmind Directory: ' . esc_html($cca_maxmind_data_dir) . '</p>';
-  if (! defined('CCA_MAXMIND_DIR') || validate_file( CCA_MAXMIND_DIR ) || ! file_exists(CCA_MAXMIND_DIR. 'cc_geoip.inc')
-	     || ! file_exists($cca_maxmind_data_dir . 'GeoIP.dat') || ! file_exists($cca_maxmind_data_dir . 'GeoIPv6.dat') ) : 
+	$instance = esc_html(print_r($instance, TRUE ));
+  echo '<br ><div class="cca-brown"><p>' . __('Relevant Widget Entry Settings found:') . '<br />' . str_replace( '[' , '<br /> [' , $cca_entry_values) . '</p>';
+	echo '<br /><p>' . __('FULL Widget Settings:') . '<br />' . $instance . '</p>';
+  echo '<br /><p>Maxmind Data Directory: ' . CCA_MAXMIND_DATA_DIR . '</p>';
+  if (! file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIP.dat') || ! file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIPv6.dat') ) : 
 	  echo '<p class="cca-red">' . __("Warning the Maxmind directory is invalid, or one or more Maxmind files are missing") . '</p>';
   endif;
-
-
-
-
-	$instance = esc_html(print_r($instance, TRUE ));
-  echo '<div class="cca-brown"><p>' . __('Relevant Widget Entry Settings found:') . '<br />' . str_replace( '[' , '<br /> [' , $cca_entry_values) . '</p>';
-	echo '<p>' . __('FULL Widget Settings:') . '<br />' . $instance . '</p>';
-  echo '<p>' .  __('CCAX Extension Settings') . ':<br />';
+  echo '<br /><p>' .  __('CCA Site Settings') . ':<br />';
   $ccax_values = esc_html(print_r(get_option( 'ccax_options' ), TRUE ));
-	echo str_replace( '[' , '<br /> [' , $ccax_values) . '</p></div>';
-
-
-
+	echo str_replace( '[' , '<br /> [' , $ccax_values) . '</p></div><br />';
   $ccax_values = esc_html(print_r(get_option( 'CCA_VERSION_INFO' ), TRUE ));
 	echo str_replace( '[' , '<br /> [' , $ccax_values) . '</p>';
-
 }
 
 
@@ -1098,12 +1062,13 @@ function cca_decrypt_emailaddress($encrypted_email, $crypt_key, $default_email='
 
 
 // define additional time spans for use in scheduling by wp cron
-function cca_weekly( $schedules ) {
-  $schedules['cca_weekly'] = array( 'interval' => 604800, 'display' => __('Weekly') );
-  return $schedules;
-}
-add_filter( 'cron_schedules', 'cca_weekly'); 
- 
+if (! function_exists('cca_weekly') ):
+  function cca_weekly( $schedules ) {
+    $schedules['cca_weekly'] = array( 'interval' => 604800, 'display' => __('Weekly') );
+    return $schedules;
+  }
+  add_filter( 'cron_schedules', 'cca_weekly'); 
+endif; 
 
 
 // ************************************************~*****

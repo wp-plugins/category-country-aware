@@ -1,22 +1,6 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-/* moved to main script and modified to option with path info including Maxmind
-function cca_version_mangement(){  // credit to "thenbrent" www.wpaustralia.org/wordpress-forums/topic/update-plugin-hook/
-  global $cca_calling_script;
-	$plugin_info = get_plugin_data( $cca_calling_script , false, false );
-	$last_script_ver = get_option('CCA_WID_VERSION');
-	if (empty($last_script_ver)):
-	  update_option('CCA_WID_VERSION', $plugin_info['Version']);
-  elseif ( version_compare( $plugin_info['Version'] , $last_script_ver ) != 0 ) :
-	// this script is later {1} (or earlier {-1}) than the previous installed script so:
-	  // do any upgrade action, then:
-    update_option('CCA_WID_VERSION', $plugin_info['Version']);
-	endif;
-}
-add_action( 'admin_init', 'cca_version_mangement' );
-*/
-
 // ensure js & CSS for dashboard forms is sent to browser
 function AW_CCA_load_admincssjs() {
   # could do more specific check e.g.  get_current_screen() and check if ['base'] or ['id'] == '...cca-sitewide-settings' but prob slower 

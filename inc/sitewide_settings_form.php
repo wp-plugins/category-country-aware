@@ -10,7 +10,6 @@ class CCAXSettingsPage {
 	private $ccax_post_widgets = array();
 	private $cca_plugin_ver; 
 
-
   public static function remove_extension_options($elements) {
     $ccax_options = CCAtextWidget::set_ccax_defaults();
     foreach($elements as $element) :
@@ -60,10 +59,21 @@ class CCAXSettingsPage {
 
   // callback func specified in add_options_page func
   public function create_cca_site_admin_page() {
-    if ( ! class_exists( 'CCAtextWidget' ) ) :
-      echo '<p>This is an extension to the CCA WIdget - the CCA Widget has to be ACTIVATED before this extension can be used.</p>';
-    	return;
-    endif; ?>
+  	  if (empty( $this->ccax_options['init_geoip']) ):
+			  // the Maxmind files only have to be initialised once cater for individual blog settings on multisite
+  		  if (file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIP.dat') ): 
+  		    $this->ccax_options['init_geoip'] = TRUE;
+  				update_option( 'ccax_options', $this->ccax_options);
+#				  $max_installed = TRUE;
+  			else:
+  			  echo '<div class="cca-msg cca-msg-warn"><p>' . __('You have not set your GeoIP options. Either check the option to "Initalize" or the option to "Disable" GeoIP') . '</p></div>';
+  			endif;
+ 			elseif (empty( $this->ccax_options['disable_geoip']) && empty($_SERVER["HTTP_CF_IPCOUNTRY"]) && ! file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIPv6.dat') ) :
+				  // something wrong, although "init" is set the Maxmind files don't exist
+					echo '<div class="cca-msg cca-msg-warn"><p>' . __('The IP look-up files are missing - Maxmind Country Geolocation will not work. ');
+					echo __('An uncheck/save, then check and save, of the"Update box" on the "Countries" tab might solve this.') . '</p></div>';
+  		endif;
+?>
 
     <div class="wrap">  
       <div id="icon-themes" class="icon32"></div> 
@@ -73,6 +83,7 @@ class CCAXSettingsPage {
 				<a href="?page=<?php echo CCA_X_SETTINGS_SLUG;?>&tab=general" class="nav-tab <?php echo $active_tab == 'general' ? 'nav-tab-active' : ''; ?>"><?php _e('General'); ?></a>
 				<a href="?page=<?php echo CCA_X_SETTINGS_SLUG;?>&tab=postwids&subtab=Top" class="nav-tab <?php echo $active_tab == 'postwids' ? 'nav-tab-active' : ''; ?>"><?php _e('Ads within Posts widget'); ?></a>
 				<a href="?page=<?php echo CCA_X_SETTINGS_SLUG;?>&tab=country" class="nav-tab <?php echo $active_tab == 'country' ? 'nav-tab-active' : ''; ?>"><?php _e('Countries'); ?></a>
+				<a href="?page=<?php echo CCA_X_SETTINGS_SLUG;?>&tab=test" class="nav-tab <?php echo $active_tab == 'test' ? 'nav-tab-active' : ''; ?>"><?php _e('Testing'); ?></a>
 				<!-- // action hook using array of action_type=>tab label -->
 				<?php do_action('ccax_add_tabs', $active_tab);?>
       </h2>  
@@ -93,15 +104,15 @@ class CCAXSettingsPage {
 				endif;
        break;
 
-
-
       case 'country':
 			  $this->render_country_panel();
 				submit_button('Activate/de-activate these settings');
 			 break;
 
-
-
+      case 'test':
+			  $this->render_test_panel();
+				submit_button('Activate/de-activate these settings');
+			 break;
 
       default:
 			  if( has_action('ccax_render_' . $active_tab)) :
@@ -113,8 +124,10 @@ class CCAXSettingsPage {
           add_settings_error('cca_group',esc_attr( 'settings_updated' ), __("Error: not updated - unable to identify Tab panel to display"),	'errorr'	);
         endif;
     endswitch;
+		
+		// return previous state - needed for knowing if action/non action required on multisite
+	#	if (!empty($max_installed)): echo '<input type="hidden" name="ccax_options[max_installed]" value="1" /><br />'; endif;
 		?>
-
 				<input type="hidden" name="ccax_options[action]" value="<?php echo $active_tab; ?>" />
       </form> 
     </div> 
@@ -129,20 +142,24 @@ class CCAXSettingsPage {
 
 public function render_general_panel() { ?>
 	<h3><?php _e("GeoLocation", 'aw_ccawidget');?></h3>
-  <?php _e('see ');?> <a class="cca-bold" href="http://<?php echo CCA_SUPPORT_SITE; ?>/2014/11/plugin-and-geoLocation"><?php _e('configuring caching plugins for GeoLocation', 'aw_ccawidget');?></a>
 	<div class="cca-indent20 cca-bold">
-    <p class="cca-brown"><?php _e('If you\'re using a caching plugin (or service) that is unable to manage geo-location content', 'aw_ccawidget'); ?>:</p>
+    <p><input id="ccax_init_geoip" name="ccax_options[init_geoip]" type="checkbox" <?php checked($this->ccax_options['init_geoip']); ?> />
+        <label for="ccax_init_geoip"><?php _e('Initialize GeoIP', 'aw_ccawidget'); ?>
+  	   <i> <?php _e("checking this will do the initial install of Country/IP look up files from Maxmind (it takes < 1 second).", 'aw_ccawidget');?></i></label></p>
+    <p class="cca-brown"><?php _e('If you\'re using a caching plugin (or service) that is unable to manage geo-location content', 'aw_ccawidget'); ?> (
+		<?php _e('see ');?> <a class="cca-bold" href="http://<?php echo CCA_SUPPORT_SITE; ?>/2014/11/plugin-and-geoLocation"><?php _e('configuring caching plugins for GeoLocation', 'aw_ccawidget');?></a>) :
+		</p>
 		<p><input id="ccax_disable_geoip" name="ccax_options[disable_geoip]" type="checkbox" <?php checked($this->ccax_options['disable_geoip']); // !empty($this->ccax_options['disable_geoip']) ?> />
         <label for="ccax_disable_geoip"><?php _e('Disable country selection on <u>all</u> CCA widgets.', 'aw_ccawidget'); ?>
   	   <i> (<?php _e("this setting is ignored if the Country Caching plugin is installed", 'aw_ccawidget');?>)</i></label></p>
 	</div><hr /><?php
+
   do_action('ccax_render_general',$this->ccax_options);
-	
 
   if ($this->ccax_options['responsive_function']):
 		echo '<div class="cca-bold"><a name="resp"></a><h3>' . __("CCA Responsive") . '</h3>';
 		echo __('Set "small device" width to: ');
-		?>
+?>
 		<input name="ccax_options[responsive_px]" type="text" size="6" value="<?php echo $this->ccax_options['responsive_px'] ?>" /><b>px</b> 
 		<div class="cca-indent20"><?php 
 			echo __("<u>If</u> a widget's responsive option is checked:") . '<div class="cca-indent20">';
@@ -152,15 +169,14 @@ public function render_general_panel() { ?>
 	else: ?>
 	  <input type="hidden" name="ccax_options[responsive_px]" value="<?php echo $this->ccax_options['responsive_px'] ?>" /><?php
   endif;
-
-
 	echo '<h3>' . __("De-clutter: only include the options you need in plugin/widget settings:", 'aw_ccawidget');?></h3>
 	<p><b><?php echo __('Functionality for both ', 'aw_ccawidget') . '<a href="?page=' . CCA_X_SETTINGS_SLUG . '&tab=postwids&subtab=Top">"Ad/post Widgets"</a>';
 	  echo __(' and standard  ', 'aw_ccawidget') . '<a href="' . admin_url() . 'widgets.php">CCA widgets</a>';?>:</b></p>
 	<div class="cca-indent20 cca-bold">
         <p><input id="ccax_responsive_function" name="ccax_options[responsive_function]" type="checkbox" <?php checked($this->ccax_options['responsive_function']) ?> />
         <label for="ccax_responsive_function"><?php _e("Add 'Responsive' option to each widget's settings.", 'aw_ccawidget'); ?></label></p>
-  </div><h4><?php _e('CCA widgets only:', 'aw_ccawidget');?></h4>
+  </div>
+<h4><?php _e('CCA widgets only:', 'aw_ccawidget');?></h4>
 	<div class="cca-indent20 cca-bold">
         <p><input id="ccax_display_function" name="ccax_options[display_function]" type="checkbox" <?php checked($this->ccax_options['display_function']) ?> />
         <label for="ccax_display_function"><?php _e("Add display options to each widget's settings (allows override of theme styles).", 'aw_ccawidget'); ?></label></p>
@@ -172,33 +188,90 @@ public function render_general_panel() { ?>
 
 
 
-public function render_country_panel() { ?>
+public function render_country_panel() {
+   do_action('ccax_render_country_top', $this->ccax_options);
+   if ( ! empty($_SERVER["HTTP_CF_IPCOUNTRY"])):
+     echo __('It looks like site is using Cloudflare is enabled for GeoLocation. ');
+  	 echo __(' Although not essential, it is worth "initializing and updating" Maxmind files so they can then be used by the CCA plugin as a Fallback, if Cloudflare Geolocation has a problem.') . '<br /><br />';
+  endif;
+ ?>
 		<h3>Automatically update Maxmind GeoLocation IP database</h3>
 		<p><input id="ccax_update_maxmind" name="ccax_options[update_maxmind]" type="checkbox" <?php checked(!empty($this->ccax_options['update_maxmind']));?>/>
       <label for="ccax_use_shortlist"><?php _e('Update data files now, and add to WP scheduler for auto update every 3 weeks');?></label></p>
 <?php 
-
       if (!empty($this->ccax_options['update_maxmind']) && ! wp_next_scheduled( CCA_X_MAX_CRON ) ): 
-			  cca_update_maxmind();
+#			  cca_update_maxmind();
 			  wp_schedule_event( time()+864000, 'cca_3weekly', CCA_X_MAX_CRON );
   	  endif;
 
-
-			echo __("Last successful updates: ") . '<span class="cca-brown">'; 
-			$ccax_maxmind_status = get_option( 'ccax_maxmind_status' );
-			if(!empty($ccax_maxmind_status['ipv4_up_date'])) :
-			  echo date('j M Y Hi e', $ccax_maxmind_status['ipv4_up_date']) . __(" (IPv4 data) ") . ' &nbsp; ';
-			endif;			
-			if(!empty($ccax_maxmind_status['ipv6_up_date'])) :
-			  echo date('j M Y Hi e', $ccax_maxmind_status['ipv6_up_date']) . __(" (IPv6 data)");
-			endif;	
-			echo '</span>';
-			if(!empty($ccax_maxmind_status['last_max_update_status'])) :
-			  echo __('<br /><br />Result of last update:<br /><span class="cca-brown">') . $ccax_maxmind_status['last_max_update_status'] . '</span>';
+			if (is_multisite()):
+			  _e("<b>You are using MultiSite WordPress</b>. Unfortunately WP scheduled jobs are run <i>by individual blog</i> this will result in unnecessary attempts to update Maxmind and display of out of date warnings.");
+				echo '<br />' . __(" To avoid this <b>make sure the above option is only checked on one blog</b>, and use the settings on that blog to check the health of your GeoIP.") . '<br /><br />';
 			endif;
-			
-			do_action('ccax_render_country',$this->ccax_options);
-}
+
+			clearstatcache();
+			$both_good = $ipv6_exists = $ipv4_exists = TRUE;
+			if (file_exists(CCA_MAXMIND_DATA_DIR)):
+				 $dir_exists = TRUE;
+				 echo 'Maxmind Directory: "' . CCA_MAXMIND_DATA_DIR . '"<br />';
+				 if (file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIP.dat')): 
+				    echo __('File "GeoIP.dat" last successfully updated : ') . date("F d Y H:i:s.",filemtime(CCA_MAXMIND_DATA_DIR . 'GeoIP.dat')) . '<br />';
+				 else: 
+					  echo '<span class="cca-brown">' . __('File "GeoIP.dat" could not be found. Maxmind IPv4 geolocation will not be functioning.') . '</span><br />';
+					  $both_good = $ipv4_exists = FALSE;
+				 endif;
+				 if (file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIPv6.dat')): 
+				    echo  __('File "GeoIPv6.dat" last successfully  updated : ') . date("F d Y H:i:s.",filemtime(CCA_MAXMIND_DATA_DIR . 'GeoIPv6.dat')) . '<br />';
+				 else:
+					  echo '<span class="cca-brown">' . __('File "GeoIPv6.dat" could not be found. Maxmind IPv6 geolocation will not be functioning. ') . '</span><br />';
+					  $both_good = $ipv6_exists = FALSE;
+				 endif;
+			 else:
+			 		$dir_exists = $both_good = $ipv6_exists = $ipv4_exists = FALSE;
+					echo '<span class="cca-brown">' . __('The MAxmind Directory ("') . CCA_MAXMIND_DATA_DIR . '") ' . __('does not exist. Maxmind Country GeoLocation will not be working.')  . '</span><br />';
+			 endif;
+
+			 $cc_maxmind_status = get_option( 'cc_maxmind_status' );
+			 if ($cc_maxmind_status && ! empty($cc_maxmind_status['health'] ) && $cc_maxmind_status['health'] != 'ok'):
+			 		echo '<p>' . __('The last update process reported a problem: "') . ' <span class="cca-brown">' . $cc_maxmind_status['result_msg'] . '</span>"</p>';
+			 endif; 
+			 echo '<hr />';
+
+			do_action('ccax_render_country_bottom',$this->ccax_options);
+}   //  END render_country_panel()
+
+
+public function render_test_panel() { 
+		// render content from extension
+		do_action('ccax_render_test_top', $this->ccax_options);
+?>
+<h3>Diagnostics</h3>
+  <p><i>Only enable these options if you need to provide additional information for support questions, or if you are a developer writing CCA extensions.</i></p>
+  <?php 
+    echo '<p><input id="ccax_show_ccax_vars" name="ccax_options[show_ccax_vars]" type="checkbox" />';
+    echo '<label for="ccax_show_ccax_vars">' . __("Display CCA Site Settings variables below") . '</label></p>';
+    if (!empty($this->ccax_options['show_ccax_vars']) ) :
+  	  if (! defined('CCA_MAXMIND_DATA_DIR') || ! file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIP.dat') || ! file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIPv6.dat') ) : 
+  			echo '<p class="cca-red">' . __("Warning the Maxmind directory is invalid, or one or more Maxmind files are missing") . '</p>';
+				unset($this->ccax_options['show_ccax_vars']);
+  		endif;
+  	  $ccax_values = esc_html(print_r($this->ccax_options, TRUE ));
+      echo '<p>' . __("Setting values") . ' =</p>' . str_replace ( '[' , '<br /> [' , print_r($ccax_values, TRUE )) . '</p><hr />';
+    endif;
+  	echo '<p><input type="checkbox" id="ccax_list_jobs" name="ccax_options[list_jobs]" />';
+  	echo '<label for="ccax_list_jobs">' . __('List scheduled WP jobs for this blog') . '</label></p>';
+    if ( ! empty($this->ccax_options['list_jobs'])) :
+      _e("This is the list of jobs scheduled on your site (it does NOT mean your WP scheduler/cron is actually working).<br />");
+     	_e("If update of Maxmind GeoIP files is enabled then the job 'cca_update_maxmind' (yellow highlight) should be listed ONCE below. ");
+ 			_e("Otherwise the job should not be listed.<hr /><br />");
+      cca_list_cron_jobs(CCA_X_MAX_CRON);
+    endif;
+    echo '<p><b>' . __('Only visible when logged in <u>as "Admin"</u>') . '</b>:</p><div class="cca-indent20">';
+    echo '<p><input id="ccax_show_widget_vars" name="ccax_options[diagnostics]" type="checkbox" '; checked(!empty($this->ccax_options['diagnostics'])); echo '/>';
+    echo '<label for="ccax_show_widget_vars">' . __('Display settings variables with each widget (on Dashboard->Widgets &amp; actual posts)') . '</label></p>';
+    echo '</div><hr />';
+		do_action('ccax_render_test_bottom', $this->ccax_options);
+}   //  END render_test_panel()
 
 
 // Render Post Widgets Settings Panel
@@ -222,8 +295,9 @@ public function render_country_panel() { ?>
 		else:
 		  echo apply_filters('ccax_postwid_heading', $active_subtab );
 		endif;
-		if (has_action('ccax_postwidget_more_options') && !empty($this->ccax_post_widgets[$active_subtab]) ):
-		  do_action('ccax_postwidget_more_options', $active_subtab, $this->ccax_post_widgets[$active_subtab]);
+		$entry_for_postwid =  empty($this->ccax_post_widgets[$active_subtab]) ? array() : $this->ccax_post_widgets[$active_subtab];
+		if (has_action('ccax_postwidget_more_options') /* && !empty($this->ccax_post_widgets[$active_subtab] )*/ ):
+		  do_action('ccax_postwidget_more_options', $active_subtab, $entry_for_postwid);
 		endif;
 		?>
 
@@ -276,7 +350,7 @@ public function render_country_panel() { ?>
 	}
 
 
-  // render post witget list/edit panel
+  // render post widget list/edit panel
   function ccax_options_widget_select() { ?>
     <p class="cca-brown"><b><?php _e('Manage an existing entry', 'aw_ccawidget'); ?></b><br />
      <i><?php _e('List/edit/delete custom content for Category/Country', 'aw_ccawidget'); ?></i></p>
@@ -352,15 +426,13 @@ public function render_country_panel() { ?>
   			<input type="hidden" id="ccax_widtype" name="ccax_options[widtype]" value="" />
   			<input type="hidden" id="ccax_button_action" name="ccax_options[button_action]" value="" />
   <?php
-  }
+  }   // END ccax_options_widget_select()
 
 
   // validate and save settings fields changes
   public function sanitize_ccax( $input ) {
-
 		$settings_msg = ''; $this->ccax_options['temp_msg'] = '';
 		$msg_type = 'updated';
-
     switch ($input['action']) :
 			case 'postwids':
 			  if ($input['sub_action'] != 'select' ) $this->sanitize_widget($input);
@@ -372,6 +444,9 @@ public function render_country_panel() { ?>
 			 break;
       case 'country':
         $this->sanitize_country($input);
+       break;
+      case 'test':
+        $this->sanitize_test($input);
        break;
       default:
 			  if( has_filter('ccax_sanitize_' . $input['action']) ) :
@@ -403,6 +478,23 @@ public function render_country_panel() { ?>
 		$this->ccax_options['display_function'] = empty($input['display_function']) ? FALSE : TRUE;
 		$this->ccax_options['rss_function'] = empty($input['rss_function']) ? FALSE : TRUE;
 
+    if ( ! empty($input['init_geoip'] ) && empty($this->ccax_options['init_geoip']) ):
+#			if ( empty($input['max_installed']) ) :
+					// the user is initializing maxmind for the first time, we'll switch auto update on for them, they can switch it off later if they want
+				 $do_max = new CCAmaxmindSave();
+				 $do_max->save_maxmind(TRUE);
+				 if (! $do_max):
+				   $this->ccax_options['temp_msg'] .= __('There was a problem installing the Maxmind files, see the "Countries" tab for more info, and the CCA guide for a solution.<br />');
+				 endif;
+   			 unset($do_max);
+  			 $this->ccax_options['update_maxmind'] = TRUE;
+         if ( ! wp_next_scheduled( CCA_X_MAX_CRON ) ): 
+      	    wp_schedule_event( time()+864000, 'cca_3weekly', CCA_X_MAX_CRON );
+         endif;
+# 		  endif;
+		  $this->ccax_options['init_geoip'] = TRUE;
+    endif;
+
     $responsive_px = empty($input['responsive_px'] ) ? '' : $input['responsive_px'];
     if ( $responsive_px == '' || ctype_digit($responsive_px) ) :
       $this->ccax_options['responsive_px'] = $responsive_px;
@@ -420,15 +512,29 @@ public function render_country_panel() { ?>
      	wp_clear_scheduled_hook( CCA_X_MAX_CRON);
     else:
      	$this->ccax_options['update_maxmind'] = TRUE;
+
+				 $do_max = new CCAmaxmindSave();
+				 $do_max->save_maxmind(TRUE);
+				 if (! $do_max):
+				   $this->ccax_options['temp_msg'] .= __('There was a problem installing the Maxmind files, see the "Countries" tab for more info, and the CCA guide for a solution.<br />');
+				 endif;
+   			 unset($do_max);
+
       if ( ! wp_next_scheduled( CCA_X_MAX_CRON ) ): 
-			  cca_update_maxmind();
-			  wp_schedule_event( time()+864000, 'cca_3weekly', CCA_X_MAX_CRON );    
+			  wp_schedule_event( time(), 'cca_3weekly', CCA_X_MAX_CRON );    
   	  endif;
     endif;
   
-  	$this->ccax_options = apply_filters('ccax_sanitize_county',$this->ccax_options, $input);
+  	$this->ccax_options = apply_filters('ccax_sanitize_country', $this->ccax_options, $input);
   }
 
+  function sanitize_test($input) {
+    $this->ccax_options['diagnostics'] = empty($input['diagnostics'] ) ? FALSE : TRUE;
+    $this->ccax_options['show_ccax_vars'] = empty($input['show_ccax_vars']) ? FALSE : TRUE;
+    $this->ccax_options['list_jobs'] = empty($input['list_jobs']) ? FALSE : TRUE;
+  
+  	$this->ccax_options = apply_filters('ccax_sanitize_test', $this->ccax_options, $input);
+  }
 
 
   function sanitize_widget($input) {

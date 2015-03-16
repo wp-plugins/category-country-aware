@@ -4,7 +4,7 @@ Donate link: http://means.us.com/
 Tags: Text Widget, RSS Widget, Category, Country, GeoIp, Geo-Location, Advert, Advertisement, Adverts, News Feed, RSS
 Requires at least: 3.3
 Tested up to: 4.1
-Stable tag: 0.8.0
+Stable tag: 0.8.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -83,6 +83,11 @@ Use **shortcodes** in a "Visiting Chicago" post, to:
 
 **For detailed information see [the CCA Plugin Guide](http://wptest.means.us.com/2014/11/category-country-aware-wordpress )**.
 
+&nbsp;
+
+**CCA Goodies Extension**
+Available from 19 March 2015, initially be free for a tweet (check the CCA guide for upcoming info).  More flexibility for sidebar widgets . More Ads in Posts Widgets. Enable PHP.
+Preview mode + view CCA content as if you are a visitor from specified country.  More Geolocation shortcodes. Give pages "categories" etc etc.
 
 &nbsp;
 
@@ -91,7 +96,7 @@ Use **shortcodes** in a "Visiting Chicago" post, to:
 This product includes GeoLite data created by MaxMind, available from http://www.maxmind.com .
 
 If you use Cloudflare and have "switched on" their GeoLocation option ( see [Cloudflare's instructions](https://support.cloudflare.com/hc/en-us/articles/200168236-What-does-CloudFlare-IP-Geolocation-do- ) )
-then it will be used to identify visitor country.  If not, then the Maxmind GeoLite Legacy Country Database, included with this plugin, will be used.
+then it will be used to identify visitor country.  If not, then the Maxmind GeoLite Legacy Country Database, installed by this plugin, will be used.
 
 Note: not tested on IPv6 (my servers are IPv4), but feedback on Stackoverflow indicates the code should work fine for IPv6. See CCA documentation for more info on GeoIP accuracy, whether you need to update the Maxmind DB, and setting up automatic update.
 
@@ -99,7 +104,7 @@ Experts: a hook is provided to allow you to use other GeoIP systems with this pl
 
 &nbsp;
 
-**Techies and developers only: extensions and adding functionality using actions, filters and shortcodes**
+**For developers and coders: extensions and adding functionality via actions, filters and shortcodes**
 
 A **later** release of this plugin will enable you to add functionality through your own filters, actions and shortcodes. An extension will also be released to give you an idea of the type of functionality you can add (see CCA website for details).
 
@@ -154,14 +159,9 @@ When viewing a post in Category "Animals" (or any other category which does not 
 
 Yes. Insert a &lt;br&gt; tag at the point you wish the new line to occur.
 
-= Why use Maxmind Legacy rather than Maxmind v2 for GeoIP? =
-
-Many WP sites still use PHP 5.2, Maxmind v2 requires at least PHP 5.3.
-
-
 = Can the widget be made to execute PHP code? =
 
-Short answer: coming soon, via an extension where you positively opt to allow PHP
+Short answer: coming soon, via an extension where you positively opt to allow PHP see plugin guide for upcoming info.
 
 Long answer: any plugin enabling input of arbitrary PHP has increased security risks, however I am aware there is high demand for this feature.
 To protect normal non-PHP users, you will have to positively opt to enable PHP. For security opt-in is set by a separate plugin to the widget that executes it.
@@ -171,7 +171,8 @@ I am currently testing an extension that among other things includes an "allow P
 
 Short answer:
 <br /> &nbsp; Yes for Cloudflare (according to my tests) using their "aggressive caching" option
-<br /> &nbsp; Coming soon: "perfectly" for **Quickcache** and **WP Supercache** when using an extension to the caching plugins. See CCA documentation.
+<br /> &nbsp; "Perfectly" for **Quickcache** and **WP Supercache** when using the country caching plugin extension for WPSC, or 
+[for ZC/QC](https://wordpress.org/plugins/country-caching-extension/ ). See CCA documentation.
 <br /> &nbsp; W3 Total Cache: DIY solutions (less than perfect).
 <br /> &nbsp; Other caching plugins may or may not provide suitable settings.
 
@@ -198,6 +199,13 @@ full answer:  see CCA documentation
 
 == Changelog ==
 
+= 0.8.5 = 
+Addition of Settings Form Diagnostics panel. Modification of extension hooks (an extension will be availabele from 19 March 15 providing major increase in functionality, flexability 
+& usabilty and its currently free if you tweet it - [see Plugin Guide](http://wptest.means.us.com/2014/11/category-country-aware-wordpress )).
+
+GeoIP data files are now installed when you first "initialize" the CCA enable Country Caching. This alteration is to meet WordPress.org repository requirments (all files stored there should be licensed 
+under GPL) Whereas Maxmind's data files are provided under Creative Commons license. 
+
 = 0.8.0 =
 PHP 5.2.x is no longer supported. The CCA plugin now requires PHP version 5.3 or greater.
 Bugfixes: 1. resolves compatibility issue with certain GeoIP plugins that prevented display of CCA widgets/content.
@@ -212,6 +220,13 @@ Maxmind Directory path is "broadcast" so it can be used by other Wordpress plugi
 * First published version.
 
 == Upgrade Notice ==
+
+= 0.8.5 = 
+Addition of Settings Form Diagnostics panel. Modification of extension hooks (an extension will be availabele from 19 March 15 providing major increase in functionality, flexability 
+& usabilty and its currently free if you tweet it - [see Plugin Guide](http://wptest.means.us.com/2014/11/category-country-aware-wordpress )).
+
+GeoIP data files are now installed when you first "initialize" the CCA enable Country Caching. This alteration is to meet WordPress.org repository requirments (all files stored there should be licensed 
+under GPL) Whereas Maxmind's data files are provided under Creative Commons license. 
 
 = 0.8.0 =
 PHP 5.2.x is no longer supported. The CCA plugin now requires PHP version 5.3 or greater. Bugfixes: a) resolves compatibility issue with some GeoIP plugins that prevented display of CCA widgets/content.
