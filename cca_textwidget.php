@@ -121,7 +121,7 @@ function cca_insert_content_top( $content ) {
 }
 
 
-// identify which widget entry to display, get it, and format it
+// identify which Ads in Posts widget entry to display, get it, and format it
 function ccax_prepare_additional_content( $widtype ) {
 
   $content_widgets = get_option( 'ccax_post_widgets');
@@ -149,7 +149,7 @@ function ccax_prepare_additional_content( $widtype ) {
     $additional_content = ob_get_contents();
     ob_end_clean();
 	endif;
-	$additional_content = apply_filters('cca_text_process_content', $additional_content);  // IS THIS NEEDED - IF SO SHOULD IT IGNORE SHORTCODE OPTION?
+	$additional_content = apply_filters('cca_text_process_content', $additional_content);  // execute shortcodes in post widget content
 
   if ( ! empty($the_entry['make_responsive']) ) :
     $prefix = '<div class="cca-smaldev-only">';

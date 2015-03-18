@@ -55,7 +55,7 @@ Use **shortcodes** in a "Visiting Chicago" post, to:
 
 &nbsp;
 
-**Features**:
+**Features ( [more info in the CCA Plugin Guide](http://wptest.means.us.com/2014/11/category-country-aware-wordpress ))**:
 
 * location aware **Shortcodes** for use in posts and pages (see CCA documentation).
 
@@ -81,12 +81,8 @@ Use **shortcodes** in a "Visiting Chicago" post, to:
 
 &nbsp;
 
-**For detailed information see [the CCA Plugin Guide](http://wptest.means.us.com/2014/11/category-country-aware-wordpress )**.
-
-&nbsp;
-
 **CCA Goodies Extension**
-Available from 19 March 2015, initially be free for a tweet (check the CCA guide for upcoming info).  More flexibility for sidebar widgets . More Ads in Posts Widgets. Enable PHP.
+Available from 19 March 2015, initially it will be free for a tweet [see this post for more info](http://wptest.means.us.com/2015/03/cca-goodies-extension/ ).  More flexibility for sidebar widgets . More "Ads in Posts" widgets. Enable PHP.
 Preview mode + view CCA content as if you are a visitor from specified country.  More Geolocation shortcodes. Give pages "categories" etc etc.
 
 &nbsp;
@@ -161,11 +157,10 @@ Yes. Insert a &lt;br&gt; tag at the point you wish the new line to occur.
 
 = Can the widget be made to execute PHP code? =
 
-Short answer: coming soon, via an extension where you positively opt to allow PHP see plugin guide for upcoming info.
+Short answer:yes [via the CCA goodies extension] (http://wptest.means.us.com/2015/03/cca-goodies-extension/ ) where you positively opt to allow PHP.
 
 Long answer: any plugin enabling input of arbitrary PHP has increased security risks, however I am aware there is high demand for this feature.
 To protect normal non-PHP users, you will have to positively opt to enable PHP. For security opt-in is set by a separate plugin to the widget that executes it.
-I am currently testing an extension that among other things includes an "allow PHP" option.
 
 = Caching plugins/services have problems with dynamic content such as GeoIP. Will the country location part of the CCA plugin work with these? =
 
