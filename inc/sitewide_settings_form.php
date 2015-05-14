@@ -146,12 +146,12 @@ public function render_general_panel() { ?>
     <p><input id="ccax_init_geoip" name="ccax_options[init_geoip]" type="checkbox" <?php checked($this->ccax_options['init_geoip']); ?> />
         <label for="ccax_init_geoip"><?php _e('Initialize GeoIP', 'aw_ccawidget'); ?>
   	   <i> <?php _e("checking this will do the initial install of Country/IP look up files from Maxmind (it takes < 1 second).", 'aw_ccawidget');?></i></label></p>
-    <p class="cca-brown"><?php _e('If you\'re using a caching plugin (or service) that is unable to manage geo-location content', 'aw_ccawidget'); ?> (
-		<?php _e('see ');?> <a class="cca-bold" href="http://<?php echo CCA_SUPPORT_SITE; ?>/2014/11/plugin-and-geoLocation"><?php _e('configuring caching plugins for GeoLocation', 'aw_ccawidget');?></a>) :
-		</p>
 		<p><input id="ccax_disable_geoip" name="ccax_options[disable_geoip]" type="checkbox" <?php checked($this->ccax_options['disable_geoip']); // !empty($this->ccax_options['disable_geoip']) ?> />
         <label for="ccax_disable_geoip"><?php _e('Disable country selection on <u>all</u> CCA widgets.', 'aw_ccawidget'); ?>
-  	   <i> (<?php _e("this setting is ignored if the Country Caching plugin is installed", 'aw_ccawidget');?>)</i></label></p>
+				  <i class="cca-brown"><?php _e('Tick this setting if you\'re using a caching plugin (or service) that is unable to manage geo-location content', 'aw_ccawidget'); ?> (
+		        <?php _e('see ');?> <a class="cca-bold" href="http://<?php echo CCA_SUPPORT_SITE; ?>/2014/11/plugin-and-geoLocation"><?php _e('configuring caching plugins for GeoLocation', 'aw_ccawidget');?></a>) :
+		     </i></label>
+		 </p>
 	</div><hr /><?php
 
   do_action('ccax_render_general',$this->ccax_options);
@@ -311,7 +311,10 @@ public function render_test_panel() {
     </div>
       AND visitor is from: 
     <div class="cca-indent20">
-		  <?php $disable_geoip = apply_filters( 'cca_disable_geoip', $this->ccax_options['disable_geoip']); ?>
+		  <?php 
+// 0.9.0			
+			$disable_geoip = empty($this->ccax_options['disable_geoip']) ? FALSE:TRUE;
+			?>
       <p><select name="ccax_options[selected_country]"<?php if ($disable_geoip) echo ' disabled="disabled"'; ?>><?php
          $country_array = array('-anywhere-' => '"any"/"other" (Default)') + apply_filters( 'cca_widget_country_list', CCAgeoip::get_country_array() );
     		 $selected_country = empty($this->ccax_post_widgets[$active_subtab]['selected_country']) ? '-anywhere-' : $this->ccax_post_widgets[$active_subtab]['selected_country'];

@@ -4,7 +4,7 @@ Donate link: http://means.us.com/
 Tags: Text Widget, RSS Widget, Category, Country, GeoIp, Geo-Location, Advert, Advertisement, Adverts, News Feed, RSS
 Requires at least: 3.3
 Tested up to: 4.1
-Stable tag: 0.8.5
+Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,11 +47,13 @@ Use "**Ads within posts widget**" to display a gadget advert within posts in cat
 
 * set widget to only display on small devices i.e. when your sidebar is not visible.
 
-Use **shortcodes** in a "Visiting Chicago" post, to:
+Use **shortcodes to customize your posts** for visitors from different countries e.g.
 
-* hide unnecessary info about Passport/Visa requirements for visitors from within US and Canada
+* [display only="US,GB"]some content[cca_display] will only display the enclosed content, advert etc to visitors from US and UK.
 
-* auto convert temperature to the right scale for your visitor (&deg;F/&deg;C)  
+* [cca_display not="GB,AU"]some content[cca_display] will NOT display the enclosed content to visitors from the specified countries.
+
+* auto convert temperature to the right scale for your visitor (&deg;F/&deg;C)
 
 &nbsp;
 
@@ -82,7 +84,7 @@ Use **shortcodes** in a "Visiting Chicago" post, to:
 &nbsp;
 
 **CCA Goodies Extension**
-Available from 19 March 2015, initially it will be free for a tweet [see this post for more info](http://wptest.means.us.com/2015/03/cca-goodies-extension/ ).  More flexibility for sidebar widgets . More "Ads in Posts" widgets. Enable PHP.
+Currently free for a tweet [see this post for more info](http://wptest.means.us.com/2015/03/cca-goodies-extension/ ).  More flexibility for sidebar widgets . More "Ads in Posts" widgets. Enable PHP.
 Preview mode + view CCA content as if you are a visitor from specified country.  More Geolocation shortcodes. Give pages "categories" etc etc.
 
 &nbsp;
@@ -194,6 +196,12 @@ full answer:  see CCA documentation
 
 == Changelog ==
 
+= 0.9.0 =
+* New option to "hide" a CCA widget by default, or for specific category(s)/country(s).
+* New cca_display shortcode option to only show selected content within posts to visitors from particular country(s). See online guide or e.g. in readme.txt.
+* "Disable Geoip" bugfix. N.B. If you are using the Country Caching extension make sure "Disable GeoIP"  in the CCA Goodies settings form is unchecked as Country Caching no longer overrides this CCA setting.
+* Prevent editing of CCA widgets using "WP Customizer" which is not category or country aware.
+
 = 0.8.5 = 
 Addition of Settings Form Diagnostics panel. Modification of extension hooks (an extension will be availabele from 19 March 15 providing major increase in functionality, flexability 
 & usabilty and its currently free if you tweet it - [see Plugin Guide](http://wptest.means.us.com/2014/11/category-country-aware-wordpress )).
@@ -215,6 +223,12 @@ Maxmind Directory path is "broadcast" so it can be used by other Wordpress plugi
 * First published version.
 
 == Upgrade Notice ==
+
+= 0.9.0 =
+* New option to "hide" a CCA widget by default, or for specific category(s)/country(s).
+* New cca_display shortcode option to only show selected content within posts to visitors from particular country(s). See online guide or e.g. in readme.txt.
+* "Disable Geoip" bugfix. N.B. If you are using the Country Caching extension make sure "Disable GeoIP"  in the CCA Goodies settings form is unchecked as Country Caching no longer overrides this CCA setting.
+* Prevent editing of CCA widgets using "WP Customizer" which is not category or country aware.
 
 = 0.8.5 = 
 Addition of Settings Form Diagnostics panel. Modification of extension hooks (an extension will be availabele from 19 March 15 providing major increase in functionality, flexability 

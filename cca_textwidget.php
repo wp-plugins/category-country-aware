@@ -129,11 +129,8 @@ function ccax_prepare_additional_content( $widtype ) {
 	if ( !empty($content_widgets[$widtype]['preview_mode']) && ! current_user_can( 'manage_options' ) )return '';
 
   $ccax_options = get_option( 'ccax_options' );
-	if ($ccax_options && $ccax_options['disable_geoip']) :
-    $disable_geoip = apply_filters('cca_disable_geoip', TRUE); // might return false to override disable
-  else :
-	  $disable_geoip = FALSE;
-	endif;
+// 0.9.0
+	$disable_geoip = empty($ccax_options['disable_geoip']) ? FALSE:TRUE;
 
   if ($disable_geoip) $ISOcode = '-anywhere-';
   if (empty($ISOcode)) $ISOcode = CCAgeoip::do_lookup('ccode');
@@ -188,6 +185,12 @@ function ccax_get_additional_content($additional_content, $ISOcode) {
       	endif;
       endforeach;
   endif;
+	$entry = '0_' . $ISOcode;
+// 0.9.0
+	if (! empty($additional_content[$entry]['content']) ):
+	  return $additional_content[$entry];
+	endif;
+// 0.9.0 end
   if (! empty($additional_content['0_-anywhere-']['content']) ):
 	  return $additional_content['0_-anywhere-'];
 	endif;
@@ -340,8 +343,12 @@ if ( ! class_exists( 'CCAgeoip' ) ) :
 				  return '';
 				endif;
 				return do_shortcode( $content );
-			endif;
-			$content = apply_filters('cca_display_' . $selection, $content, $ccodes, $ISOcode);	// for future options
+//  0.9.0
+		  elseif ($selection == 'only'):
+		     if ( ! in_array($ISOcode, $ccodes)  ) : return ''; endif;
+	  	   return do_shortcode( $content );
+		  endif;
+//			$content = apply_filters('cca_display_' . $selection, $content, $ccodes, $ISOcode);	// for extension options
 			return $content;
 		}
 
@@ -412,12 +419,6 @@ $this->diagnostics = FALSE;
   // **************************************************
 	function widget($args, $instance) {
 
-    if ( ! has_filter('cca_none_no_render') ):
-      if ( empty($instance['cat_0_-anywhere-']) || ( $instance['cat_0_-anywhere-']['content_type'] == 'text' && empty($instance['cat_0_-anywhere-']['content'])) ) :
-    	  return;  // a default enty must be specified
-			endif;
-    endif;
-
     if(! current_user_can( 'manage_options' )) :  // don't display widget to non admin users if in preview mode
 		  if (apply_filters('cca_preview_mode',$instance['preview_mode'])) : return; endif;
 		  ini_set('display_errors',0);
@@ -429,7 +430,10 @@ $this->diagnostics = FALSE;
 
 		// get the ISO country code for the visitor's location
     $ISOcode = '';
-		$disable_geoip = apply_filters('cca_disable_geoip', $this->ccax_options['disable_geoip']);  // filter value takes precedence
+
+// 0.9.0
+		$disable_geoip = empty($this->ccax_options['disable_geoip']) ? FALSE:TRUE;		
+
 		if ($disable_geoip) $ISOcode = '-anywhere-';
 		if ($ISOcode == '') $ISOcode = CCAgeoip::do_lookup('ccode');	 // or apply_filters('cca_geoip_lookup','ccode'); OR do_shortcode('[cca_countrycode]);
 		if ($ISOcode == '') $ISOcode = '-anywhere-';
@@ -475,10 +479,11 @@ $this->diagnostics = FALSE;
       $entry=$instance[$entry_key];
 			if ($this->diagnostics) cca_echo_settings($entry, $instance);
       $content_type = $entry['content_type'];
-      if ( has_filter('cca_' . $content_type . '_no_render') ) return TRUE;  // this content_type e.g. 'none' should not be displayed
-
+ 
+ // 0.9.0
+ 			if  ($content_type == 'none')  return TRUE;  // this content_type e.g. 'none' should not be displayed
+	
 			if ( $content_type != 'text' && ! has_filter('cca_' . $content_type . '_process_content') ) return FALSE; // the extension for this type of content has been disabled
-
       $content = $entry['content'];
       if ( $content_type == 'text' && empty($content) ) { return FALSE; }
     } else {  // cater for a deactivated extension
@@ -608,9 +613,13 @@ $this->diagnostics = FALSE;
 		// DELETE request: remove entry and return
     if ($new_instance['action'] == 'delete') :
 			if ($new_instance['selected_entry'] == 'cat_0_-anywhere-') :
-		 	 	 $instance['status_msg'] = __("'default (all/anywhere)' has been reset to initial values (it can't be deleted). This widget will not function until you save new values for the default", 'aw_ccawidget');
+// 0.9.0
+				 $instance['status_msg'] = __('Widget entry for the <i>default</i> entry "all/anywhere" has been set to widget type "None".');
 				 $instance['msg_type'] = 'warn';
 				 $instance['cat_0_-anywhere-'] = $this->default_entry;
+//0.9.0
+				 $instance['cat_0_-anywhere-']['content_type'] = 'none';
+
 	 			 $instance['current_panel'] = 'contentTab';
       else :
 				 $instance['status_msg'] = __('Entry for ', 'aw_ccawidget') . $instance[$new_instance['selected_entry']]['name'] . ', ' . $instance[$new_instance['selected_entry']]['country'] . __(' deleted', 'aw_ccawidget');
@@ -670,7 +679,8 @@ $this->diagnostics = FALSE;
     	endif;
     endif;
     if ($default_error):
-      $instance['status_msg'] = __('You have NOT created a category/country ("All"/"Any") default entry. You MUST do this before creating any other category/country entries.');
+// 0.9.0
+      $instance['status_msg'] = __('You have NOT saved a default entry for category/country ("All"/"Any"). You MUST enter content for this entry, or set to "None", and "Save Entry" before creating any other category/country entries.');
       $instance['msg_type'] = 'warn';
       $instance['selected_category'] = '0';
       $instance['selected_country'] = '-anywhere-';
@@ -697,8 +707,9 @@ $this->diagnostics = FALSE;
 		$new_entry['title_type'] = $title_type;
 		if ($title_type != 'default'): $new_entry = apply_filters('cca_title_entry', $new_entry, $new_instance); endif;
 		$new_entry['content'] = empty($new_instance['new_content']) ? '' : $new_instance['new_content'];
+//0.9.0
+		if ( $content_type != 'text' && $content_type != 'none' && ! has_filter('cca_' . $content_type . '_save') ) :	
 
-		if ( $content_type != 'text' && ! has_filter('cca_' . $content_type . '_save') ) :
       $instance['status_msg'] .= __('Warning content type "', 'aw_ccawidget') . $content_type . __('" not recognised - treating as a text widget. ', 'aw_ccawidget');
 			$instance['msg_type'] = 'warn';
     	$content_type = $new_entry['content_type'] = 'text';
@@ -710,11 +721,18 @@ $this->diagnostics = FALSE;
 				$instance[$entry_key] = $new_entry;
 				$instance['status_msg'] .= __('Entry for "', 'aw_ccawidget') . $new_entry['name'] . '", "' . $new_entry['country'] . '" saved' . '.';
 			else:
-        $instance['status_msg'] .= __('!!! NOT SAVED: you have specified a Text Widget but did not enter any content for it. ', 'aw_ccawidget');
-			  $instance['status_msg'] .= __('If you were intending to remove this entry click the List Tab above and then use the delete tool. ', 'aw_ccawidget');
+        $instance['status_msg'] .= __('!!! NOT SAVED: you have specified a <u>Text</u> Widget but did not enter any content for it. ', 'aw_ccawidget');
+// 0.9.0
+			  $instance['status_msg'] .= __('To hide widget for this category/country select widget type "None". If you were intending to remove this entry click the List Tab above and then use the delete tool. ', 'aw_ccawidget');
 				$instance['msg_type'] = 'warn';
 				$instance['content'] = '';
 			endif;
+
+// 0.9.0
+		elseif ($content_type == 'none') :
+			  	$instance[$entry_key] = $new_entry;
+					$instance['status_msg'] .= __('Entry for "', 'aw_ccawidget') . $new_entry['name'] . '", "' . $new_entry['country'] . '" saved.';
+
 		else:
 			$extension_content_key = $content_type . '_settings';
 		  if ( !empty($instance[$entry_key]) && !empty($instance[$entry_key][$extension_content_key])) :
@@ -766,7 +784,8 @@ $this->diagnostics = FALSE;
 		$current_panel = strip_tags($instance['current_panel']);
     $selected_category = strip_tags($instance['selected_category']);
     $selected_country = strip_tags($instance['selected_country']);
-		$disable_geoip = apply_filters( 'cca_disable_geoip', $this->ccax_options['disable_geoip']); // extension setting take precendence
+// 0.9.0
+	 $disable_geoip = empty($this->ccax_options['disable_geoip']) ? FALSE:TRUE;
 
 		$above_widget = strip_tags($instance['above_widget']);
 		$above_widget_unit = ($instance['above_widget_unit'] == 'em') ? 'em' : 'px';
@@ -777,7 +796,13 @@ $this->diagnostics = FALSE;
 
     $instance = apply_filters('cca_alter_form_values', $instance);
 
-    $title_type = strip_tags($instance['title_type']);
+    if ($GLOBALS['pagenow'] == 'customize.php' ) :
+		  echo '<h3>The customizer is NOT Category Country Aware and won\'t edit or display correctly. Please use the standard Dashboard->Appearence->Widgets editor to add or edit your CCA widgets</h3>';
+			echo '<h3><a href="http://wptest.means.us.com/2015/03/cca-goodies-extension/">A free add-on to the CCA plugin is available that enables you to preview CCA content</a> for any page(Category) as a visitor from any specified country.</h3>';
+			return;
+		endif;
+		
+		$title_type = strip_tags($instance['title_type']);
 		if (!empty($this->ccax_options['diagnostics']) ): 
 			echo '<p class="cca-brown">' . __('Diagnostic mode (set in CCA Site Settings) is ON; see bottom of this form for values set.', 'aw_ccawidget') . '</p>';
 			echo '<p class="cca-brown">' . __('If you are using a caching plugin or service, make sure it is not caching dashboard pages/admin user', 'aw_ccawidget') . '.</p>';
@@ -788,8 +813,10 @@ $this->diagnostics = FALSE;
 <?php
 
 		$no_geoip = FALSE;
-    if ( empty($_SERVER["HTTP_CF_IPCOUNTRY"])  && ! $this->ccax_options['disable_geoip'] && ! file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIP.dat') ) :
-		  if (empty($this->ccax_options['init_geoip']) ):
+
+
+   if ( empty($_SERVER["HTTP_CF_IPCOUNTRY"])  && ! $disable_geoip && ! file_exists(CCA_MAXMIND_DATA_DIR . 'GeoIP.dat') ) :
+ 		  if (empty($this->ccax_options['init_geoip']) ):
         $geoip_warn = __('You have not set your GeoIP options. Either check the option to "Initalize GeoIP" or the option to "Disable GeoIP" on the');
     	  $geoip_warn .= ' <a href="' . CCA_X_ADMIN_URL . '&tab=general#resp">CCA Site Settings form</a>.';
 			else:
@@ -847,7 +874,7 @@ $this->diagnostics = FALSE;
     		// country dropdown box	
     	  echo '<br />' . __('AND', 'aw_ccawidget') . '<br /> ' . __("Visitor's country", 'aw_ccawidget') . ': ';
 
-    	  if ($disable_geoip || $no_geoip) : ?>
+    	  if ($disable_geoip || $no_geoip) :  ?>
     			  <select id="<?php echo $fieldId_prefix; ?>selected_country" disabled="disabled">
     				  <option value="-anywhere-" selected>"any" / "other" (Default)</option>
     				</select></p>
@@ -873,21 +900,20 @@ $this->diagnostics = FALSE;
         if ( ! empty($the_entry) && ! empty($the_entry['content']) ) $contentValue = esc_textarea($the_entry['content']); 
         else $contentValue = '';
 
+// 0.9.0
         $more_radio = '';
         $more_radio .= apply_filters( 'cca_add_widget_types', $more_radio, $fieldId_prefix, $name_prefix, $instance, $entry_key, $this->ccax_options);
-        if (empty($more_radio)) : 
-          echo '<input type="hidden" name="' . $name_prefix . '[content_type]" value="text"/>';
-        else :
 ?>
     		  <p><?php _e('Widget Type', 'aw_ccawidget'); ?>:
       		&nbsp; <input type="radio" id="<?php echo $fieldId_prefix;?>textwid" class="cca-radio_widtype"	name="<?php echo $name_prefix; ?>[content_type]" value="text"
       		<?php echo ($content_type=='' || $content_type=='text')?'checked':'' ?>><label for="<?php echo $fieldId_prefix;?>textwid"><?php _e('Text (normal)', 'aw_ccawidget'); ?></label> &nbsp;   
-<?php
+          <?php echo '<input type="radio" id="' . $fieldId_prefix . 'nowid" class="cca-radio_widtype" name="' . $name_prefix . '[content_type]"  value="none" ';
+          echo ($content_type=='none')?'checked':'';
+          echo '><label for="' . $fieldId_prefix . 'nowid">' . __('NONE (hide)', 'aw_ccawidget') . ' </label>';
 		 			echo $more_radio;
           echo '</p>';
-    		endif;
+// 0.9.0 end 
     		do_action('cca_add_widget_type_panels', $fieldId_prefix, $name_prefix, $instance, $entry_key);
-
         echo '<div id="' . $fieldId_prefix .'textwid_div" class="cca-widget-entry-div';
 
 				if ( empty($more_radio) || $content_type=='text') echo ' cca-widget-entry-div-active">';
