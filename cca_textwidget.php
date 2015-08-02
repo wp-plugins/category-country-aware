@@ -241,8 +241,15 @@ if ( ! class_exists( 'CCAgeoip' ) ) :
       'UZ' => 'Uzbekistan','VE' => 'Venezuela','VN' => 'Vietnam','YE' => 'Yemen','ZM' => 'Zambia','ZW' => 'Zimbabwe'
     );
 
+ 
+ 		protected static $theEU = "BE,BG,CZ,DK,DE,EE,IE,GR,ES,FR,HR,IT,CY,LV,LT,LU,HU,MT,NL,AT,PL,PT,RO,SI,SK,FI,SE,GB";
+ 
     static function get_country_array() {
        return self::$countriesToISO;
+    }
+
+		static function get_EU_ISOs() {
+       return self::$theEU;
     }
 
 
@@ -272,7 +279,7 @@ if ( ! class_exists( 'CCAgeoip' ) ) :
 		  global $cca_ISOcode;
 				
 			if (!empty($cca_ISOcode)) return $cca_ISOcode; // only look-up once
-      if( current_user_can( 'manage_options' )) $cca_ISOcode = apply_filters('cca_use_admin_country_code', $cca_ISOcode);  // future use
+      if( current_user_can( 'manage_options' )) $cca_ISOcode = apply_filters('cca_use_admin_country_code', $cca_ISOcode);  
       if ($cca_ISOcode != '') return $cca_ISOcode;
       $cca_ISOcode = apply_filters('cca_country_code_from_other_geoip', ''); // if used filter must return 2 char ISO code for visitors IP, or '' if ip lookup unsuccesful
 			if  ( ctype_alpha($cca_ISOcode) && strlen($cca_ISOcode) == 2 ) return strtoupper($cca_ISOcode);
@@ -361,6 +368,17 @@ if ( ! class_exists( 'CCAgeoip' ) ) :
   }  // end CCAgeoip class
 endif; // end class exist check
 
+
+add_filter('cca_is_EU', 'cca_is_from_EU',10,2);
+function cca_is_from_EU($override_list, $EU_list="") {
+   $cca_ISOcode =  CCAgeoip::do_lookup('ccode');
+	 if ($EU_list == '' || $override_list === FALSE):
+		   $EU_list = CCAgeoip::get_EU_ISOs();
+   endif;
+ 	 if ( stristr($EU_list, $cca_ISOcode) === FALSE) return FALSE;
+	 return TRUE;
+}
+
 add_filter('cca_geoip_lookup', array('CCAgeoip','do_lookup'));
 add_shortcode( 'cca_countrycode', array( 'CCAgeoip', 'get_visitor_country_code' ) );
 add_shortcode( 'cca_countryname', array( 'CCAgeoip', 'get_visitor_country_name' ) );
@@ -400,11 +418,13 @@ class CCAtextWidget extends WP_Widget {
   // **************************************************
   // WIDGET CONSTRUCTOR
   // **************************************************
-  function CCAtextWidget() {
+//  function CCAtextWidget() {
+  function __construct() {
      $widget_ops = array('classname' => 'cca_textwidget', 'description' => __( 'Sidebar content by category and visitor locale (GeoIP)'), 'aw_ccawidget' );
 		 $this->classname = $widget_ops['classname'];  //css class
      $control_ops = array('width' => 400, 'height' => 650,  'id_base' => 'ccatextwid');
-     $this->WP_Widget('ccatextwid', 'CCA WIDGET', $widget_ops, $control_ops);   // text on dashboard widget page
+//     $this->WP_Widget('ccatextwid', 'CCA WIDGET', $widget_ops, $control_ops);   // text on dashboard widget page
+		 parent::__construct('ccatextwid', 'CCA WIDGET', $widget_ops, $control_ops);   // text on dashboard widget page
 		 $this->default_cca_widget_settings = apply_filters('cca_default_form_settings', self::$default_cca_widget_settings_array);
 		 $this->default_entry = apply_filters('cca_default_entry', self::$default_entry_array);
 		 $this->default_cca_widget_settings['cat_0_-anywhere-'] = $this->default_entry; 
@@ -872,13 +892,14 @@ $this->diagnostics = FALSE;
 				$dropdown_args = apply_filters('cca_category_dropdown', $dropdown_args);
     	  echo '<p class="cca-brown"><b>' . __('Widget Content for this', 'aw_ccawidget') . ':</b></p><p class="cca-txtleft"> ' . __('Category: ', 'aw_ccawidget'); wp_dropdown_categories($dropdown_args);
     		// country dropdown box	
-    	  echo '<br />' . __('AND', 'aw_ccawidget') . '<br /> ' . __("Visitor's country", 'aw_ccawidget') . ': ';
+    	  echo '<br />' . __('AND', 'aw_ccawidget') . '<br /><span title="Use CCA Site Settings to enable Country functionality (Dashboard->Settings->Category Country Goodies"> ' . __("Visitor's country", 'aw_ccawidget') . ': ';
 
     	  if ($disable_geoip || $no_geoip) :  ?>
-    			  <select id="<?php echo $fieldId_prefix; ?>selected_country" disabled="disabled">
+    			  
+						<select id="<?php echo $fieldId_prefix; ?>selected_country" disabled="disabled">
     				  <option value="-anywhere-" selected>"any" / "other" (Default)</option>
-    				</select></p>
-    				<input type="hidden" name="<?php echo $name_prefix; ?>[selected_country]" value="-anywhere-" />
+    				</select></span></p>  				
+						<input type="hidden" name="<?php echo $name_prefix; ?>[selected_country]" value="-anywhere-" />
     		<?php else:	
       			echo '<select id="' . $fieldId_prefix .'selected_country" name="' . $name_prefix . '[selected_country]">';
             $aw_cca_country_array = array('-anywhere-' => '"any" / "other" (Default)') + apply_filters( 'cca_widget_country_list', CCAgeoip::get_country_array() );

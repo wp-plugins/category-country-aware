@@ -3,7 +3,7 @@ Contributors: wrigs1
 Donate link: http://means.us.com/
 Tags: Text Widget, RSS Widget, Category, Country, GeoIp, Geo-Location, Advert, Advertisement, Adverts, News Feed, RSS
 Requires at least: 3.3
-Tested up to: 4.2.2
+Tested up to: 4.2.3
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -196,6 +196,12 @@ full answer:  see CCA documentation
 
 == Changelog ==
 
+= 0.9.1 =
+* Added filter for use by EU Cookie Law plugins to enable them to only display cookie confirmation banner to visitors from EU. 
+* e.g. apply_filters( 'cca_is_EU',$override_list) ) or apply_filters( 'cca_is_EU',$override_list,"AB,CD,EF") ). If $override_list is set to TRUE the plugin can specify its own list of countries otherwise the followinfg country codes are assumed to be the EU:
+* "BE,BG,CZ,DK,DE,EE,IE,GR,ES,FR,HR,IT,CY,LV,LT,LU,HU,MT,NL,AT,PL,PT,RO,SI,SK,FI,SE,GB"
+* modified CCA widget to use a modern constructor
+
 = 0.9.0 =
 * New option to "hide" a CCA widget by default, or for specific category(s)/country(s).
 * New cca_display shortcode option to only show selected content within posts to visitors from particular country(s). See online guide or e.g. in readme.txt.
@@ -223,6 +229,12 @@ Maxmind Directory path is "broadcast" so it can be used by other Wordpress plugi
 * First published version.
 
 == Upgrade Notice ==
+
+= 0.9.1 =
+* Added filter for use by EU Cookie Law plugins to enable them to only display cookie confirmation banner to visitors from EU. 
+* e.g. apply_filters( 'cca_is_EU',$override_list) ) or apply_filters( 'cca_is_EU',$override_list,"AB,CD,EF") ). If $override_list is set to TRUE the plugin can specify its own list of countries otherwise the followinfg country codes are assumed to be the EU:
+* "BE,BG,CZ,DK,DE,EE,IE,GR,ES,FR,HR,IT,CY,LV,LT,LU,HU,MT,NL,AT,PL,PT,RO,SI,SK,FI,SE,GB"
+* modified CCA widget to use a modern constructor
 
 = 0.9.0 =
 * New option to "hide" a CCA widget by default, or for specific category(s)/country(s).
