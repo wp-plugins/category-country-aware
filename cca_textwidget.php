@@ -387,6 +387,24 @@ add_shortcode( 'cca_display', array( 'CCAgeoip', 'show_content' ) );
 add_shortcode( 'cca_iso_to_county', array( 'CCAgeoip','get_name_for_isocode' ) );
 
 
+//  geo enable cookie_notice plugin
+// Display notice on home page only
+// function cca_cookie_notice_eu_only( $output ) {
+function cca_cookie_notice_EUonly($output) {
+  $ccax_options = get_option( 'ccax_options' );
+  if (  ! $ccax_options || empty($ccax_options['only_EU_cookie'])  || empty($ccax_options['EU_ccodes']) ):
+	  return $output;
+	endif;
+  $cca_ISOcode =  CCAgeoip::do_lookup('ccode');
+  $EU_list = $ccax_options['EU_ccodes'];
+   if ( stristr($EU_list, $cca_ISOcode) === FALSE) :
+     return '';   
+   endif;
+   return $output;
+}
+add_filter( 'cn_cookie_notice_output', 'cca_cookie_notice_EUonly',99);
+
+
 // **************************************************
 // CCA WIDGET
 // **************************************************

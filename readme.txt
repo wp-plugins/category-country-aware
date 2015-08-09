@@ -3,7 +3,7 @@ Contributors: wrigs1
 Donate link: http://means.us.com/
 Tags: Text Widget, RSS Widget, Category, Country, GeoIp, Geo-Location, Advert, Advertisement, Adverts, News Feed, RSS
 Requires at least: 3.3
-Tested up to: 4.2.3
+Tested up to: 4.2.4
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -168,7 +168,7 @@ To protect normal non-PHP users, you will have to positively opt to enable PHP. 
 
 Short answer:
 <br /> &nbsp; Yes for Cloudflare (according to my tests) using their "aggressive caching" option
-<br /> &nbsp; "Perfectly" for **Quickcache** and **WP Supercache** when using the country caching plugin extension for WPSC, or 
+<br /> &nbsp; "Perfectly" for **ZenCache** and **WP Supercache** when using the country caching plugin extension [for WPSC] (https://wordpress.org/plugins/country-caching-extension-for-wp-super-cache/ ), or 
 [for ZC/QC](https://wordpress.org/plugins/country-caching-extension/ ). See CCA documentation.
 <br /> &nbsp; W3 Total Cache: DIY solutions (less than perfect).
 <br /> &nbsp; Other caching plugins may or may not provide suitable settings.
@@ -195,6 +195,10 @@ full answer:  see CCA documentation
 
 
 == Changelog ==
+
+= 0.9.2 =
+* Added option to set the [Cookie Notice plugin](https://wordpress.org/plugins/cookie-notice/ ) to only display its cookie bar to European Union visitors ONLY. 
+* Dashboard->Settings->Category Country Goodies->Countries  and check the "set Cookie Notice to only display its cookie bar for these countries" box
 
 = 0.9.1 =
 * Added filter for use by EU Cookie Law plugins to enable them to only display cookie confirmation banner to visitors from EU. 
@@ -229,6 +233,10 @@ Maxmind Directory path is "broadcast" so it can be used by other Wordpress plugi
 * First published version.
 
 == Upgrade Notice ==
+
+= 0.9.2 =
+* Added option to set the [Cookie Notice plugin](https://wordpress.org/plugins/cookie-notice/ ) to only display its cookie bar to European Union visitors ONLY. 
+* Dashboard->Settings->Category Country Goodies->Countries  and check the "set Cookie Notice to only display its cookie bar for these countries" box
 
 = 0.9.1 =
 * Added filter for use by EU Cookie Law plugins to enable them to only display cookie confirmation banner to visitors from EU. 

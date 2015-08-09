@@ -4,7 +4,7 @@ Plugin Name: Category Country Aware Wordpress
 Plugin URI: http://means.us.com
 Description: Display different widget content depending on category and visitor location (country)
 Author: Andrew Wrigley
-Version: 0.9.1
+Version: 0.9.2
 Author URI: http://means.us.com/
 */
 /* FOR WP 3.3 ON */

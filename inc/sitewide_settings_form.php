@@ -197,7 +197,7 @@ public function render_country_panel() {
  ?>
 		<h3>Automatically update Maxmind GeoLocation IP database</h3>
 		<p><input id="ccax_update_maxmind" name="ccax_options[update_maxmind]" type="checkbox" <?php checked(!empty($this->ccax_options['update_maxmind']));?>/>
-      <label for="ccax_use_shortlist"><?php _e('Update data files now, and add to WP scheduler for auto update every 3 weeks');?></label></p>
+      <label for="ccax_update_maxmind"><?php _e('Update data files now, and add to WP scheduler for auto update every 3 weeks');?></label></p>
 <?php 
       if (!empty($this->ccax_options['update_maxmind']) && ! wp_next_scheduled( CCA_X_MAX_CRON ) ): 
 #			  cca_update_maxmind();
@@ -236,6 +236,22 @@ public function render_country_panel() {
 			 		echo '<p>' . __('The last update process reported a problem: "') . ' <span class="cca-brown">' . $cc_maxmind_status['result_msg'] . '</span>"</p>';
 			 endif; 
 			 echo '<hr />';
+
+echo '<h3>Make Cookie_Notice plugin only display cookie law bar to visitors from the EU</h3>';
+echo '<p><a href="https://www.google.com/about/company/user-consent-policy.html" target="_blank">Google now requires sites using Adsense</a> obtain cookie consent from their "European end users".';
+echo ' Even EU visitors find "cookie consent bars" irritating so most sites will not want them displayed for non-EU visitors.</p>';
+echo '<p>If you are using the <i><a href="https://wordpress.org/plugins/cookie-notice/" target="_blank">Cookie Notice</a> plugin (one of the most popular) you can use these settings so its cookie bar is only displayed to EU visitors.</p>';
+if (empty($this->ccax_options['EU_ccodes'])):
+   $this->ccax_options['EU_ccodes'] = CCAgeoip::get_EU_ISOs();
+endif;
+?><p><input id="ccax_only_EU_cookie" name="ccax_options[only_EU_cookie]" type="checkbox" <?php checked(!empty($this->ccax_options['only_EU_cookie']));?>/>
+      <label for="ccax_only_EU_cookie"><?php _e('Check this box to set <i>Cookie Notice</i> to only display its cookie bar for these countries:');?></label></p>
+		  <div class="cca-indent20">
+  		  <input id="ccax_EU_ccodes" name="ccax_options[EU_ccodes]" type="text" style="width:600px !important" value="<?php echo $this->ccax_options['EU_ccodes']; ?>" />
+  		  <br><i>(<?php _e('You should check, and if necessary edit this list - no warranty is give that it is complete and up to date.');?></i>
+      </div>
+
+<?php
 
 			do_action('ccax_render_country_bottom',$this->ccax_options);
 }   //  END render_country_panel()
@@ -528,6 +544,9 @@ public function render_test_panel() {
   	  endif;
     endif;
   
+	  $this->ccax_options['only_EU_cookie'] = empty($input['only_EU_cookie'] ) ? FALSE : TRUE;
+    $this->ccax_options['EU_ccodes'] = $input['EU_ccodes'];
+
   	$this->ccax_options = apply_filters('ccax_sanitize_country', $this->ccax_options, $input);
   }
 
